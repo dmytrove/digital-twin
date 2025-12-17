@@ -17,7 +17,7 @@ const PageLoader = () => (
 
 function App() {
   return (
-    <Router>
+    <Router basename="/digital-twin">
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<MapPage />} />

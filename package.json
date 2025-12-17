@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://yourusername.github.io/your-repo-name/",
+  "homepage": "https://dmytrove.github.io/digital-twin/",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
