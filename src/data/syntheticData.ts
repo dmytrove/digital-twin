@@ -13,47 +13,90 @@ function generateAssetTag(): string {
 }
 
 const equipmentTemplates = [
-  { type: 'server', manufacturer: 'Dell', models: ['PowerEdge R740', 'PowerEdge R640', 'PowerEdge R840'], unitHeight: 2, power: 750 },
-  { type: 'server', manufacturer: 'HP', models: ['ProLiant DL380 Gen10', 'ProLiant DL360'], unitHeight: 2, power: 800 },
-  { type: 'switch', manufacturer: 'Cisco', models: ['Catalyst 9300', 'Nexus 9000', 'Catalyst 2960X'], unitHeight: 1, power: 350 },
-  { type: 'router', manufacturer: 'Cisco', models: ['ISR 4451', 'ASR 1001-X'], unitHeight: 2, power: 400 },
-  { type: 'firewall', manufacturer: 'Palo Alto', models: ['PA-5220', 'PA-3220'], unitHeight: 1, power: 300 },
-  { type: 'storage', manufacturer: 'NetApp', models: ['FAS8200', 'AFF A250'], unitHeight: 4, power: 1200 },
-  { type: 'ups', manufacturer: 'APC', models: ['Smart-UPS SRT 3000', 'Smart-UPS SRT 5000'], unitHeight: 3, power: 0 },
-  { type: 'pdu', manufacturer: 'APC', models: ['AP8841', 'AP8861'], unitHeight: 0, power: 0 },
-  { type: 'patch-panel', manufacturer: 'Panduit', models: ['CP48WSBLY', 'CP24WSBLY'], unitHeight: 1, power: 0 }
+  // 1U Servers (blade servers, compact servers) - standard depth
+  { type: 'server', manufacturer: 'Dell', models: ['PowerEdge R640', 'PowerEdge R650'], unitHeight: 1, power: 550, width: 0.48, depth: 0.7 },
+  { type: 'server', manufacturer: 'HP', models: ['ProLiant DL360 Gen10', 'ProLiant DL365 Gen10 Plus'], unitHeight: 1, power: 500, width: 0.48, depth: 0.72 },
+  
+  // 2U Servers (standard rack servers) - deeper for more drives
+  { type: 'server', manufacturer: 'Dell', models: ['PowerEdge R740', 'PowerEdge R740xd', 'PowerEdge R750'], unitHeight: 2, power: 750, width: 0.48, depth: 0.75 },
+  { type: 'server', manufacturer: 'HP', models: ['ProLiant DL380 Gen10', 'ProLiant DL385 Gen10 Plus'], unitHeight: 2, power: 800, width: 0.48, depth: 0.73 },
+  { type: 'server', manufacturer: 'Lenovo', models: ['ThinkSystem SR650', 'ThinkSystem SR630'], unitHeight: 2, power: 750, width: 0.48, depth: 0.74 },
+  
+  // 4U Servers (high-capacity servers) - full depth
+  { type: 'server', manufacturer: 'Dell', models: ['PowerEdge R840', 'PowerEdge R940'], unitHeight: 4, power: 1600, width: 0.48, depth: 0.8 },
+  { type: 'server', manufacturer: 'HP', models: ['ProLiant DL580 Gen10'], unitHeight: 4, power: 1800, width: 0.48, depth: 0.8 },
+  
+  // Network Switches (1U) - shallow depth
+  { type: 'switch', manufacturer: 'Cisco', models: ['Catalyst 9300', 'Nexus 93180YC-FX'], unitHeight: 1, power: 350, width: 0.48, depth: 0.4 },
+  { type: 'switch', manufacturer: 'Arista', models: ['7050SX3-48YC12', '7280SR3-48YC8'], unitHeight: 1, power: 400, width: 0.48, depth: 0.42 },
+  { type: 'switch', manufacturer: 'Juniper', models: ['EX4300-48T', 'QFX5120-48Y'], unitHeight: 1, power: 380, width: 0.48, depth: 0.38 },
+  
+  // Core Switches (2U) - medium depth
+  { type: 'switch', manufacturer: 'Cisco', models: ['Nexus 9336C-FX2', 'Catalyst 9500-40X'], unitHeight: 2, power: 650, width: 0.48, depth: 0.5 },
+  
+  // Routers (2U) - medium depth
+  { type: 'router', manufacturer: 'Cisco', models: ['ISR 4451', 'ASR 1001-X', 'ISR 4431'], unitHeight: 2, power: 450, width: 0.48, depth: 0.52 },
+  { type: 'router', manufacturer: 'Juniper', models: ['MX204', 'MX150'], unitHeight: 2, power: 500, width: 0.48, depth: 0.5 },
+  
+  // Firewalls (1U and 2U) - compact depth
+  { type: 'firewall', manufacturer: 'Palo Alto', models: ['PA-5220', 'PA-3220'], unitHeight: 1, power: 300, width: 0.48, depth: 0.45 },
+  { type: 'firewall', manufacturer: 'Fortinet', models: ['FortiGate 600E', 'FortiGate 1800F'], unitHeight: 1, power: 280, width: 0.48, depth: 0.43 },
+  { type: 'firewall', manufacturer: 'Checkpoint', models: ['6600 Appliance', '16600 Appliance'], unitHeight: 2, power: 550, width: 0.48, depth: 0.5 },
+  
+  // Storage Arrays (2U to 4U) - extra deep for drives
+  { type: 'storage', manufacturer: 'NetApp', models: ['FAS8200', 'FAS8300'], unitHeight: 2, power: 800, width: 0.48, depth: 0.85 },
+  { type: 'storage', manufacturer: 'Dell EMC', models: ['PowerStore 3200T', 'Unity XT 480'], unitHeight: 2, power: 850, width: 0.48, depth: 0.82 },
+  { type: 'storage', manufacturer: 'NetApp', models: ['AFF A800', 'FAS9500'], unitHeight: 4, power: 1600, width: 0.48, depth: 0.9 },
+  { type: 'storage', manufacturer: 'Pure Storage', models: ['FlashArray//X90', 'FlashBlade//S'], unitHeight: 3, power: 1400, width: 0.48, depth: 0.88 },
+  
+  // UPS Systems (2U to 6U) - medium depth
+  { type: 'ups', manufacturer: 'APC', models: ['Smart-UPS SRT 2200', 'Smart-UPS SRT 3000'], unitHeight: 2, power: 0, width: 0.48, depth: 0.6 },
+  { type: 'ups', manufacturer: 'APC', models: ['Smart-UPS SRT 5000', 'Smart-UPS SRT 6000'], unitHeight: 4, power: 0, width: 0.48, depth: 0.65 },
+  { type: 'ups', manufacturer: 'Eaton', models: ['9PX 3000RT', '93PR 6000'], unitHeight: 3, power: 0, width: 0.48, depth: 0.62 },
+  
+  // PDUs (1U or 0U vertical mount) - very shallow
+  { type: 'pdu', manufacturer: 'APC', models: ['AP8841 Metered PDU', 'AP8861 Switched PDU'], unitHeight: 1, power: 0, width: 0.45, depth: 0.15 },
+  { type: 'pdu', manufacturer: 'Raritan', models: ['PX3-5466', 'PX3-5776'], unitHeight: 1, power: 0, width: 0.45, depth: 0.12 },
+  
+  // Patch Panels (1U) - very shallow
+  { type: 'patch-panel', manufacturer: 'Panduit', models: ['CP48WSBLY', 'CP24WSBLY'], unitHeight: 1, power: 0, width: 0.48, depth: 0.1 },
+  { type: 'patch-panel', manufacturer: 'Leviton', models: ['49255-H48', '49255-H24'], unitHeight: 1, power: 0, width: 0.48, depth: 0.08 }
 ];
 
 function createEquipment(
   rackId: string,
   rackUnit: number,
   rackPosition: { x: number, z: number },
-  status: BIMEquipment['fourDStatus'] = 'existing-retained'
+  status: BIMEquipment['fourDStatus'] = 'existing-retained',
+  template?: typeof equipmentTemplates[0]
 ): BIMEquipment {
-  const template = equipmentTemplates[Math.floor(Math.random() * equipmentTemplates.length)];
-  const model = template.models[Math.floor(Math.random() * template.models.length)];
+  const equipmentTemplate = template || equipmentTemplates[Math.floor(Math.random() * equipmentTemplates.length)];
+  const model = equipmentTemplate.models[Math.floor(Math.random() * equipmentTemplate.models.length)];
   
   return {
     id: generateEquipmentId(),
-    name: `${template.manufacturer} ${model}`,
-    type: template.type as BIMEquipment['type'],
-    manufacturer: template.manufacturer,
+    name: `${equipmentTemplate.manufacturer} ${model}`,
+    type: equipmentTemplate.type as BIMEquipment['type'],
+    manufacturer: equipmentTemplate.manufacturer,
     model: model,
     rackId: rackId,
     rackUnit: rackUnit,
-    unitHeight: template.unitHeight,
+    unitHeight: equipmentTemplate.unitHeight,
     position: {
       x: rackPosition.x,
-      y: (rackUnit - 1) * 0.0445 + 0.5,
+      // Rack is 2.0 units tall with 42U, so each U = 2.0/42 ≈ 0.0476
+      // Equipment should be centered in its rack unit space
+      // Y position = bottom of rack (0) + (rack unit - 1) * unit height + half of equipment height
+      y: (rackUnit - 1) * (2.0 / 42) + (equipmentTemplate.unitHeight * (2.0 / 42) / 2),
       z: rackPosition.z
     },
     dimensions: {
-      width: 0.48,
-      height: template.unitHeight * 0.0445,
-      depth: 0.8
+      width: equipmentTemplate.width,
+      height: equipmentTemplate.unitHeight * (2.0 / 42), // Each U is 2.0/42 units tall
+      depth: equipmentTemplate.depth
     },
     fourDStatus: status,
-    powerConsumption: template.power,
+    powerConsumption: equipmentTemplate.power,
     serialNumber: generateSerialNumber(),
     assetTag: generateAssetTag(),
     installDate: status === 'existing-retained' ? '2023-01-15' : undefined
@@ -102,8 +145,9 @@ export const generateSyntheticSites = (): Site[] => {
       equipment: []
     };
 
-    const rackRows = 3;
-    const racksPerRow = 5;
+    // Reduce rack count to improve performance
+    const rackRows = 2;
+    const racksPerRow = 4;
     let rackCount = 0;
 
     for (let row = 0; row < rackRows; row++) {
@@ -119,53 +163,184 @@ export const generateSyntheticSites = (): Site[] => {
         );
         site.racks.push(rack);
 
-        const equipmentCount = Math.floor(Math.random() * 10) + 5;
-        let currentUnit = 1;
-
-        for (let i = 0; i < equipmentCount && currentUnit < 40; i++) {
-          const equipment = createEquipment(
-            rackId,
-            currentUnit,
-            { x: rack.position.x, z: rack.position.z },
-            'existing-retained'
-          );
-          
-          if (cityIndex === 0 && rackCount === 1 && i < 2) {
-            equipment.fourDStatus = 'existing-removed';
+        // Track occupied units to prevent overlapping
+        const occupiedUnits = new Set<number>();
+        
+        // Helper function to find next available slot
+        const findNextAvailableUnit = (startUnit: number, unitHeight: number): number | null => {
+          for (let unit = startUnit; unit <= 42 - unitHeight + 1; unit++) {
+            let canFit = true;
+            for (let u = unit; u < unit + unitHeight; u++) {
+              if (occupiedUnits.has(u)) {
+                canFit = false;
+                break;
+              }
+            }
+            if (canFit) {
+              return unit;
+            }
           }
-          
-          site.equipment.push(equipment);
-          currentUnit += equipment.unitHeight + Math.floor(Math.random() * 3) + 1;
+          return null;
+        };
+        
+        // Helper function to mark units as occupied
+        const markUnitsOccupied = (startUnit: number, unitHeight: number) => {
+          for (let u = startUnit; u < startUnit + unitHeight; u++) {
+            occupiedUnits.add(u);
+          }
+        };
+
+        // Start with PDU at bottom (common practice)
+        if (Math.random() > 0.3) { // 70% chance of PDU
+          const pduTemplate = equipmentTemplates.find(t => t.type === 'pdu' && t.unitHeight === 1);
+          if (pduTemplate) {
+            const pduUnit = findNextAvailableUnit(1, pduTemplate.unitHeight);
+            if (pduUnit !== null) {
+              const pdu = createEquipment(rackId, pduUnit, { x: rack.position.x, z: rack.position.z }, 'existing-retained', pduTemplate);
+              site.equipment.push(pdu);
+              markUnitsOccupied(pduUnit, pduTemplate.unitHeight);
+            }
+          }
+        }
+
+        // Reduce equipment count for better performance
+        const equipmentMix = [
+          { type: 'server', count: Math.floor(Math.random() * 4) + 3 },      // 3-6 servers (reduced)
+          { type: 'switch', count: Math.floor(Math.random() * 2) + 1 },      // 1-2 switches  
+          { type: 'storage', count: Math.random() > 0.5 ? 1 : 0 },           // 0-1 storage
+          { type: 'firewall', count: Math.random() > 0.6 ? 1 : 0 },         // 40% chance of firewall
+          { type: 'patch-panel', count: 1 },                                 // 1 patch panel
+          { type: 'ups', count: Math.random() > 0.5 ? 1 : 0 }               // 50% chance of UPS
+        ];
+
+        // Reduce rack utilization for better performance
+        const rackUtilization = 0.4 + Math.random() * 0.2; // 40-60% (reduced from 60-85%)
+        const maxUnitsToOccupy = Math.floor(42 * rackUtilization);
+        let totalOccupiedUnits = occupiedUnits.size;
+
+        // Place equipment by type
+        for (const mix of equipmentMix) {
+          for (let i = 0; i < mix.count && totalOccupiedUnits < maxUnitsToOccupy; i++) {
+            const typeTemplates = equipmentTemplates.filter(t => t.type === mix.type);
+            if (typeTemplates.length === 0) continue;
+            
+            const template = typeTemplates[Math.floor(Math.random() * typeTemplates.length)];
+            
+            // Find next available slot with optional gap
+            let searchStart = 1;
+            if (occupiedUnits.size > 0) {
+              searchStart = Math.max(...Array.from(occupiedUnits)) + 1;
+              // Add optional gap for cable management
+              if (mix.type === 'switch' || mix.type === 'router') {
+                searchStart += Math.floor(Math.random() * 2); // 0-1U gap
+              }
+            }
+            
+            const availableUnit = findNextAvailableUnit(searchStart, template.unitHeight);
+            if (availableUnit === null) break; // No more space in rack
+            
+            const equipment = createEquipment(
+              rackId,
+              availableUnit,
+              { x: rack.position.x, z: rack.position.z },
+              'existing-retained',
+              template
+            );
+            
+            // Mark some equipment for removal (demo scenario)
+            if (cityIndex === 0 && rackCount === 1 && i < 2 && mix.type === 'server') {
+              equipment.fourDStatus = 'existing-removed';
+            }
+            
+            site.equipment.push(equipment);
+            markUnitsOccupied(availableUnit, template.unitHeight);
+            totalOccupiedUnits = occupiedUnits.size;
+          }
         }
       }
     }
 
     if (cityIndex === 0) {
-      const proposedEquipment1 = createEquipment(
-        'rack-1-1',
-        20,
-        { x: -7, z: -5 },
-        'proposed'
-      );
-      proposedEquipment1.name = 'Dell PowerEdge R750 (New)';
-      site.equipment.push(proposedEquipment1);
+      // Add proposed equipment with realistic specifications
+      // Find equipment in first rack and place proposed equipment in empty slots
+      const firstRack = site.racks[0];
+      const firstRackEquipment = site.equipment.filter(e => e.rackId === firstRack.id).sort((a, b) => a.rackUnit - b.rackUnit);
+      
+      // Find first available slot that can fit 2U server
+      let proposedUnit = 20;
+      for (const eq of firstRackEquipment) {
+        if (eq.rackUnit >= proposedUnit && eq.rackUnit < proposedUnit + 2) {
+          proposedUnit = eq.rackUnit + eq.unitHeight + 1; // Place after existing equipment
+        }
+      }
+      
+      if (proposedUnit + 2 <= 42) {
+        const serverTemplate = equipmentTemplates.find(t => t.manufacturer === 'Dell' && t.models.includes('PowerEdge R750'));
+        if (serverTemplate) {
+          const proposedServer = createEquipment(
+            firstRack.id,
+            proposedUnit,
+            { x: firstRack.position.x, z: firstRack.position.z },
+            'proposed',
+            serverTemplate
+          );
+          proposedServer.name = 'Dell PowerEdge R750 (New)';
+          site.equipment.push(proposedServer);
+        }
+      }
 
-      const proposedEquipment2 = createEquipment(
-        'rack-1-1',
-        23,
-        { x: -7, z: -5 },
-        'proposed'
-      );
-      proposedEquipment2.name = 'Cisco Catalyst 9500 (New)';
-      site.equipment.push(proposedEquipment2);
+      // Add proposed switch
+      const switchTemplate = equipmentTemplates.find(t => t.manufacturer === 'Cisco' && t.type === 'switch' && t.unitHeight === 2);
+      if (switchTemplate && firstRack) {
+        // Find available slot for switch
+        let switchUnit = 26;
+        const rackEquipment = site.equipment.filter(e => e.rackId === firstRack.id).sort((a, b) => a.rackUnit - b.rackUnit);
+        for (const eq of rackEquipment) {
+          if (eq.rackUnit >= switchUnit && eq.rackUnit < switchUnit + 2) {
+            switchUnit = eq.rackUnit + eq.unitHeight + 1;
+          }
+        }
+        
+        if (switchUnit + 2 <= 42) {
+          const proposedSwitch = createEquipment(
+            firstRack.id,
+            switchUnit,
+            { x: firstRack.position.x, z: firstRack.position.z },
+            'proposed',
+            switchTemplate
+          );
+          proposedSwitch.name = 'Cisco Nexus 9336C-FX2 (New)';
+          site.equipment.push(proposedSwitch);
+        }
+      }
 
-      const proposedEquipment3 = createEquipment(
-        'rack-1-2',
-        15,
-        { x: -4, z: -5 },
-        'proposed'
-      );
-      site.equipment.push(proposedEquipment3);
+      // Add proposed storage in second rack
+      const secondRack = site.racks[1];
+      if (secondRack) {
+        const storageTemplate = equipmentTemplates.find(t => t.manufacturer === 'NetApp' && t.type === 'storage' && t.unitHeight === 2);
+        if (storageTemplate) {
+          // Find available slot in second rack
+          let storageUnit = 15;
+          const rack2Equipment = site.equipment.filter(e => e.rackId === secondRack.id).sort((a, b) => a.rackUnit - b.rackUnit);
+          for (const eq of rack2Equipment) {
+            if (eq.rackUnit >= storageUnit && eq.rackUnit < storageUnit + 2) {
+              storageUnit = eq.rackUnit + eq.unitHeight + 1;
+            }
+          }
+          
+          if (storageUnit + 2 <= 42) {
+            const proposedStorage = createEquipment(
+              secondRack.id,
+              storageUnit,
+              { x: secondRack.position.x, z: secondRack.position.z },
+              'proposed',
+              storageTemplate
+            );
+            proposedStorage.name = 'NetApp FAS8300 (New)';
+            site.equipment.push(proposedStorage);
+          }
+        }
+      }
 
       const futureRack = createRack(
         'rack-1-future',
@@ -176,14 +351,51 @@ export const generateSyntheticSites = (): Site[] => {
       );
       site.racks.push(futureRack);
 
-      for (let i = 0; i < 3; i++) {
-        const futureEquipment = createEquipment(
+      // Add realistic future equipment
+      let futureUnit = 1;
+      
+      // Add future server
+      const futureServerTemplate = equipmentTemplates.find(t => t.manufacturer === 'HP' && t.type === 'server' && t.unitHeight === 2);
+      if (futureServerTemplate) {
+        const futureServer = createEquipment(
           futureRack.id,
-          1 + i * 4,
+          futureUnit,
           { x: futureRack.position.x, z: futureRack.position.z },
-          'future'
+          'future',
+          futureServerTemplate
         );
-        site.equipment.push(futureEquipment);
+        futureServer.name = 'HP ProLiant DL380 Gen10 (Future)';
+        site.equipment.push(futureServer);
+        futureUnit += futureServerTemplate.unitHeight + 1;
+      }
+      
+      // Add future switch
+      const futureSwitchTemplate = equipmentTemplates.find(t => t.manufacturer === 'Arista' && t.type === 'switch');
+      if (futureSwitchTemplate) {
+        const futureSwitch = createEquipment(
+          futureRack.id,
+          futureUnit,
+          { x: futureRack.position.x, z: futureRack.position.z },
+          'future',
+          futureSwitchTemplate
+        );
+        futureSwitch.name = 'Arista 7050SX3 (Future)';
+        site.equipment.push(futureSwitch);
+        futureUnit += futureSwitchTemplate.unitHeight + 1;
+      }
+      
+      // Add future storage
+      const futureStorageTemplate = equipmentTemplates.find(t => t.manufacturer === 'Pure Storage' && t.type === 'storage');
+      if (futureStorageTemplate) {
+        const futureStorage = createEquipment(
+          futureRack.id,
+          futureUnit,
+          { x: futureRack.position.x, z: futureRack.position.z },
+          'future',
+          futureStorageTemplate
+        );
+        futureStorage.name = 'Pure Storage FlashArray (Future)';
+        site.equipment.push(futureStorage);
       }
     }
 

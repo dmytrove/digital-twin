@@ -1,0 +1,1740 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Lumen Asset LCM – 3D Viewer (Mock)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet"
+        href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css" />
+
+  <style>
+    /* ----------------------------------------------------------------------------------------------------------------------------------
+       CSS STYLES
+       (Styles omitted here for brevity, assume the full, previous CSS is included)
+    ---------------------------------------------------------------------------------------------------------------------------------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #0f172a;
+      color: #f9fafb;
+    }
+
+    /* Top nav bar matching map.html --------------------------------------- */
+    .top-nav {
+      height: 56px;
+      background: #020617;
+      border-bottom: 1px solid #1f2937;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-lumen {
+      height: 20px;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+    }
+
+    .nav-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      font-size: 11px;
+      color: #e5e7eb;
+    }
+
+    .powered-by {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #cbd5e1;
+      opacity: 0.95;
+    }
+
+    .powered-by-logo {
+      height: 20px;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+    }
+
+    /* Top strip ----------------------------------------------------------- */
+    .top-strip {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      background: #020617;
+      border-bottom: 1px solid #1f2937;
+    }
+
+    .strip-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .site-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .site-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .site-id {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .strip-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .link-back {
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      padding: 4px 10px;
+      text-decoration: none;
+      color: #e5e7eb;
+      background: #020617;
+      cursor: pointer;
+    }
+
+    .link-back:hover {
+      background: #111827;
+    }
+
+    .btn-toggle {
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      padding: 4px 10px;
+      background: #020617;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+
+    .btn-toggle:hover {
+      background: #111827;
+    }
+
+    /* Main layout: viewer + divider + inventory --------------------------- */
+    .main-layout {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .viewer-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      border-bottom: 1px solid #1f2937;
+      position: relative;
+      min-height: 160px;
+    }
+
+    .viewer-placeholder-frame {
+      width: 100%;
+      height: 100%;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      text-align: center;
+      padding: 0;
+      overflow: hidden;
+      background: #020617;
+    }
+
+    /* APS Viewer container */
+    #forgeViewer {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
+    /* Overlay chip row ---------------------------------------------------- */
+    .overlay-chip-row {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      left: auto;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    /* Layers collapsible toggle (Option A) */
+    .layers-toggle {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      padding: 4px 10px;
+      background: rgba(15, 23, 42, 0.95);
+      color: #e5e7eb;
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      transition: background 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+    }
+
+    .layers-toggle:hover {
+      background: rgba(30, 64, 175, 0.9);
+      border-color: rgba(129, 140, 248, 0.9);
+    }
+
+    .layers-toggle.collapsed {
+      opacity: 0.75;
+      background: rgba(15, 23, 42, 0.9);
+      border-color: rgba(75, 85, 99, 0.9);
+    }
+
+    .layers-panel {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .layers-panel.collapsed {
+      display: none;
+    }
+
+    .chip-block {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip-block.building-block {
+      margin-left: 8px;
+      padding-left: 8px;
+      border-left: 1px solid rgba(75, 85, 99, 0.7);
+    }
+
+    .chip-block.anomaly-block {
+      margin-left: 8px;
+      padding-left: 8px;
+      border-left: 1px dashed rgba(75, 85, 99, 0.6);
+    }
+
+    .status-chip {
+      border-radius: 999px;
+      padding: 3px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      transition:
+        opacity 0.15s ease,
+        border-style 0.15s ease,
+        background 0.15s ease,
+        border-color 0.15s ease;
+      color: #e5e7eb;
+    }
+
+    .status-chip.toggleable {
+      cursor: pointer;
+    }
+
+    .status-chip.toggleable:hover {
+      background: rgba(30, 64, 175, 0.85);
+      border-color: rgba(129, 140, 248, 0.9);
+    }
+
+    .status-chip.toggleable.inactive {
+      opacity: 0.35;
+      border-style: dashed;
+      background: rgba(15, 23, 42, 0.45);
+      border-color: rgba(75, 85, 99, 0.8);
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      transition: opacity 0.15s ease;
+    }
+
+    /* UPDATED COLOURS: Existing retain = grey, Proposed = green ----------- */
+    .dot-existing-retain { background: #9ca3af; }  /* grey */
+    .dot-existing-remove { background: #ef4444; }
+    .dot-proposed        { background: #22c55e; }  /* green */
+    .dot-future          { background: #eab308; }
+    .dot-modified        { background: #a855f7; }
+
+    /* Colour toggle pill */
+    .color-toggle {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      padding: 4px 10px;
+      background: rgba(15, 23, 42, 0.95);
+      color: #e5e7eb;
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+    }
+
+    .color-toggle:hover {
+      background: rgba(30, 64, 175, 0.9);
+      border-color: rgba(129, 140, 248, 0.9);
+    }
+
+    .color-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      background: linear-gradient(135deg, #f97316 0%, #f97316 49%, #22c55e 51%, #22c55e 100%);
+      border: 1px solid rgba(148, 163, 184, 0.9);
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.8);
+      transition: filter 0.15s ease, opacity 0.15s ease;
+    }
+
+    .color-toggle.off .color-indicator {
+      filter: grayscale(1);
+      opacity: 0.6;
+    }
+
+    .color-toggle.off {
+      opacity: 0.75;
+      background: rgba(15, 23, 42, 0.85);
+      border-color: rgba(75, 85, 99, 0.9);
+    }
+
+    /* When colour is off, hide 4D dots */
+    .color-off .status-dot {
+      opacity: 0;
+    }
+
+    /* Anomaly chip */
+    .anomaly-chip {
+      border-radius: 999px;
+      border: 1px solid rgba(248, 250, 252, 0.35);
+      padding: 4px 10px;
+      background: rgba(15, 23, 42, 0.96);
+      color: #fde68a;
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 0 1px rgba(120, 53, 15, 0.35);
+    }
+
+    .anomaly-chip:hover {
+      background: rgba(180, 83, 9, 0.88);
+      color: #fef9c3;
+    }
+
+    .anomaly-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #f97316;
+      box-shadow: 0 0 0 2px rgba(254, 215, 170, 0.4);
+    }
+
+    /* Divider handle between viewer and inventory ------------------------ */
+    .divider {
+      height: 6px;
+      background: #020617;
+      border-top: 1px solid #1f2937;
+      border-bottom: 1px solid #1f2937;
+      cursor: row-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .divider-handle {
+      width: 48px;
+      height: 2px;
+      border-radius: 999px;
+      background: #4b5563;
+      opacity: 0.9;
+    }
+
+    /* Inventory area ------------------------------------------------------ */
+    .inventory-wrapper {
+      background: #020617;
+      border-top: 1px solid #1f2937;
+      transition: height 0.12s ease, opacity 0.12s ease;
+      overflow: hidden;
+      height: 220px;
+      min-height: 120px;
+      max-height: 60vh;
+    }
+
+    .inventory-wrapper.hidden {
+      height: 0 !important;
+      opacity: 0;
+      border-top-color: transparent;
+    }
+
+    .inventory-wrapper.visible {
+      opacity: 1;
+    }
+
+    .inventory-inner {
+      padding: 10px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .inventory-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #e5e7eb;
+    }
+
+    .inventory-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .inventory-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .inventory-meta {
+      font-size: 11px;
+      opacity: 0.65;
+    }
+
+    .inventory-table-container {
+      flex: 1;
+      border-radius: 10px;
+      border: 1px solid #1e293b;
+      background: #020617;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    thead {
+      background: #020617;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 6px 8px;
+      border-bottom: 1px solid #1e293b;
+      color: #9ca3af;
+      font-weight: 500;
+      white-space: nowrap;
+      background: #020617;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #020617;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: #020617;
+    }
+
+    tbody tr:hover {
+      background: #111827;
+    }
+
+    tbody td {
+      padding: 6px 8px;
+      color: #e5e7eb;
+      border-bottom: 1px solid #020617;
+      white-space: nowrap;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      background: #020617;
+      border: 1px solid #1e293b;
+    }
+
+    /* Selected / highlighted row ------------------------------------------ */
+    .selected-row {
+      background: linear-gradient(90deg, #111827 0%, #1f2937 100%) !important;
+      box-shadow: inset 3px 0 0 #38bdf8;
+    }
+
+    /* Properties button --------------------------------------------------- */
+    .properties-btn {
+      border-radius: 999px;
+      border: 1px solid #1f293b;
+      width: 24px;
+      height: 24px;
+      font-size: 13px;
+      background: #020617;
+      color: #e5e7eb;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .properties-btn:hover {
+      background: #111827;
+      border-color: #38bdf8;
+    }
+
+    .properties-gear {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    /* Properties panel ---------------------------------------------------- */
+    .properties-panel {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 40;
+    }
+
+    .properties-panel.open {
+      display: flex;
+    }
+
+    .properties-backdrop {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .properties-content {
+      width: 380px;
+      max-width: 90vw;
+      background: #020617;
+      border-left: 1px solid #1f2937;
+      box-shadow: -12px 0 30px rgba(15, 23, 42, 0.7);
+      display: flex;
+      flex-direction: column;
+      padding: 14px 16px 16px;
+    }
+
+    .properties-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .properties-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .properties-subtitle {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+
+    .properties-close {
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #020617;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .properties-close:hover {
+      background: #111827;
+    }
+
+    .properties-body {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .properties-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid #111827;
+    }
+
+    .properties-row span:first-child {
+      color: #9ca3af;
+    }
+
+    .properties-row span:last-child {
+      color: #e5e7eb;
+    }
+
+    /* Anomaly panel ------------------------------------------------------- */
+    .anomaly-panel {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 38;
+    }
+
+    .anomaly-panel.open {
+      display: flex;
+    }
+
+    .anomaly-backdrop {
+      flex: 1;
+      background: transparent;
+    }
+
+    .anomaly-content {
+      width: 420px;
+      max-width: 95vw;
+      background: #020617;
+      border-left: 1px solid #1f2937;
+      box-shadow: -12px 0 30px rgba(15, 23, 42, 0.75);
+      display: flex;
+      flex-direction: column;
+      padding: 14px 16px 16px;
+    }
+
+    .anomaly-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .anomaly-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .anomaly-subtitle {
+      font-size: 11px;
+      color: #fbbf24;
+      margin-top: 2px;
+    }
+
+    .anomaly-close {
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #020617;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .anomaly-close:hover {
+      background: #111827;
+    }
+
+    .anomaly-body {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .anomaly-row {
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      padding: 8px 10px;
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .anomaly-row-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    .anomaly-type {
+      color: #fed7aa;
+      font-weight: 500;
+    }
+
+    .anomaly-location {
+      color: #9ca3af;
+    }
+
+    .anomaly-description {
+      font-size: 11px;
+      color: #e5e7eb;
+    }
+
+    .anomaly-action {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .anomaly-action label {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .anomaly-action select {
+      flex: 1;
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+    }
+
+    .anomaly-footer {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .anomaly-submit-btn {
+      border-radius: 999px;
+      border: 1px solid #ea580c;
+      padding: 6px 14px;
+      background: #c2410c;
+      color: #fefce8;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .anomaly-submit-btn:hover {
+      background: #ea580c;
+    }
+
+    /* Layout when inventory is hidden ------------------------------------ */
+    .main-layout.inventory-hidden .divider {
+      display: none;
+    }
+
+    .main-layout.inventory-hidden .inventory-wrapper {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <div class="nav-left">
+      <img
+        src="https://assets.lumen.com/is/content/Lumen/Lumen-logo-R?Creativeid=dd032ee8-6530-4437-8e9d-209b357060ce"
+        alt="Lumen logo"
+        class="logo-lumen"
+      />
+      <div class="nav-title">Lumen Asset LCM</div>
+    </div>
+
+    <div class="nav-right">
+      <div class="powered-by">
+        <span>Powered by</span>
+        <img
+          src="https://ambiflo7908.live-website.com/wp-content/uploads/2025/01/ambiflo_full_colour_clearance-512.png"
+          alt="Ambiflo"
+          class="powered-by-logo"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="top-strip">
+    <div class="strip-left">
+      <div class="site-meta">
+        <div class="site-name">CSRKCOCF – Castlerock</div>
+        <div class="site-id">USA · Colorado · Autodesk web viewer embed</div>
+      </div>
+    </div>
+    <div class="strip-right">
+      <button class="btn-toggle" onclick="toggleInventory()">Toggle inventory</button>
+      <a class="link-back" href="map.html">Back to map</a>
+    </div>
+  </div>
+
+  <div id="mainLayout" class="main-layout">
+    <div class="viewer-area">
+      <div class="overlay-chip-row">
+        <button id="layersToggle" class="layers-toggle" type="button">
+          Layers ▾
+        </button>
+
+        <div id="layersPanel" class="layers-panel">
+          <div class="chip-block">
+            <button id="colorToggle" class="color-toggle" type="button" onclick="toggleColor()">
+              <span class="color-indicator"></span>
+              <span id="colorToggleLabel">Colour: On</span>
+            </button>
+
+            <div class="status-chip toggleable active" data-layer="existing-retain" data-type="4d">
+              <span class="status-dot dot-existing-retain"></span>
+              <span>Existing retain</span>
+            </div>
+            <div class="status-chip toggleable active" data-layer="existing-remove" data-type="4d">
+              <span class="status-dot dot-existing-remove"></span>
+              <span>Existing remove</span>
+            </div>
+            <div class="status-chip toggleable active" data-layer="proposed" data-type="4d">
+              <span class="status-dot dot-proposed"></span>
+              <span>Proposed</span>
+            </div>
+            <div class="status-chip toggleable active" data-layer="future" data-type="4d">
+              <span class="status-dot dot-future"></span>
+              <span>Future</span>
+            </div>
+            <div class="status-chip toggleable active" data-layer="modified" data-type="4d">
+              <span class="status-dot dot-modified"></span>
+              <span>Modified</span>
+            </div>
+          </div>
+
+          <div class="chip-block building-block">
+            <div class="status-chip toggleable active" data-layer="building" data-type="building">
+              <span>Building</span>
+            </div>
+          </div>
+
+          <div class="chip-block anomaly-block">
+            <button id="anomalyChip" class="anomaly-chip" type="button">
+              <span class="anomaly-dot"></span>
+              <span>Anomalies: 3</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="viewer-placeholder-frame">
+        <div id="forgeViewer"></div>
+      </div>
+    </div>
+
+    <div id="divider" class="divider">
+      <div class="divider-handle"></div>
+    </div>
+
+    <div id="inventoryWrapper" class="inventory-wrapper visible">
+      <div class="inventory-inner">
+        <div class="inventory-header">
+          <div class="inventory-header-left">
+            <div class="inventory-title">Equipment inventory</div>
+            <div class="inventory-meta">
+              24 items · Filtered by 4D status · Phase: Design demo
+            </div>
+          </div>
+          <div style="font-size: 11px; opacity: 0.75;">
+            Click a row to highlight the item in the viewer (future behaviour).
+          </div>
+        </div>
+
+        <div class="inventory-table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Building</th>
+                <th>Suite</th>
+                <th>Aisle</th>
+                <th>Rack ID</th>
+                <th>Equipment</th>
+                <th>Eqyupment ID (PRO)</th>
+                <th>Type</th>
+                <th>4D status</th>
+                <th>Properties</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryBody">
+              <tr class="selected-row"
+                  data-building="B01"
+                  data-suite="110"
+                  data-aisle="Row A · Rack 01"
+                  data-rackid="10012001"
+                  data-equipment="Core router 01"
+                  data-equipmentid="50012001"
+                  data-type="Network"
+                  data-status="Existing retain">
+                <td>B01</td>
+                <td>110</td>
+                <td>Row A · Rack 01</td>
+                <td>10012001</td>
+                <td>Core router 01</td>
+                <td>50012001</td>
+                <td>Network</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-existing-retain"></span>
+                    Existing retain
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B01"
+                data-suite="120"
+                data-aisle="Row A · Rack 02"
+                data-rackid="10012002"
+                data-equipment="Core router 02"
+                data-equipmentid="50012002"
+                data-type="Network"
+                data-status="Existing remove">
+                <td>B01</td>
+                <td>120</td>
+                <td>Row A · Rack 02</td>
+                <td>10012002</td>
+                <td>Core router 02</td>
+                <td>50012002</td>
+                <td>Network</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-existing-remove"></span>
+                    Existing remove
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B02"
+                data-suite="210"
+                data-aisle="Row B · Rack 03"
+                data-rackid="20021001"
+                data-equipment="New battery cabinet"
+                data-equipmentid="50021001"
+                data-type="Power"
+                data-status="Proposed">
+                <td>B02</td>
+                <td>210</td>
+                <td>Row B · Rack 03</td>
+                <td>20021001</td>
+                <td>New battery cabinet</td>
+                <td>50021001</td>
+                <td>Power</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-proposed"></span>
+                    Proposed
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B03"
+                data-suite="310"
+                data-aisle="Row B · Rack 04"
+                data-rackid="30031001"
+                data-equipment="Microwave indoor unit"
+                data-equipmentid="50031001"
+                data-type="Backhaul"
+                data-status="Modified">
+                <td>B03</td>
+                <td>310</td>
+                <td>Row B · Rack 04</td>
+                <td>30031001</td>
+                <td>Microwave indoor unit</td>
+                <td>50031001</td>
+                <td>Backhaul</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-modified"></span>
+                    Modified
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B02"
+                data-suite="220"
+                data-aisle="Row C · Rack 05"
+                data-rackid="20022001"
+                data-equipment="Spare battery string"
+                data-equipmentid="50022001"
+                data-type="Power"
+                data-status="Future">
+                <td>B02</td>
+                <td>220</td>
+                <td>Row C · Rack 05</td>
+                <td>20022001</td>
+                <td>Spare battery string</td>
+                <td>50022001</td>
+                <td>Power</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-future"></span>
+                    Future
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B01"
+                data-suite="130"
+                data-aisle="Row C · Rack 06"
+                data-rackid="10013001"
+                data-equipment="Aggregation switch 01"
+                data-equipmentid="50013001"
+                data-type="Network"
+                data-status="Existing retain">
+                <td>B01</td>
+                <td>130</td>
+                <td>Row C · Rack 06</td>
+                <td>10013001</td>
+                <td>Aggregation switch 01</td>
+                <td>50013001</td>
+                <td>Network</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-existing-retain"></span>
+                    Existing retain
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B01"
+                data-suite=""
+                data-aisle="Row C · Rack 07"
+                data-rackid="10000001"
+                data-equipment="Aggregation switch 02"
+                data-equipmentid="50000001"
+                data-type="Network"
+                data-status="Existing retain">
+                <td>B01</td>
+                <td></td>
+                <td>Row C · Rack 07</td>
+                <td>10000001</td>
+                <td>Aggregation switch 02</td>
+                <td>50000001</td>
+                <td>Network</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-existing-retain"></span>
+                    Existing retain
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B02"
+                data-suite="230"
+                data-aisle="Row D · Rack 08"
+                data-rackid="20023001"
+                data-equipment="Rectifier 01"
+                data-equipmentid="50023001"
+                data-type="Power"
+                data-status="Existing remove">
+                <td>B02</td>
+                <td>230</td>
+                <td>Row D · Rack 08</td>
+                <td>20023001</td>
+                <td>Rectifier 01</td>
+                <td>50023001</td>
+                <td>Power</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-existing-remove"></span>
+                    Existing remove
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B03"
+                data-suite="320"
+                data-aisle="Row D · Rack 09"
+                data-rackid="30032001"
+                data-equipment="RRU test shelf"
+                data-equipmentid="50032001"
+                data-type="RF"
+                data-status="Proposed">
+                <td>B03</td>
+                <td>320</td>
+                <td>Row D · Rack 09</td>
+                <td>30032001</td>
+                <td>RRU test shelf</td>
+                <td>50032001</td>
+                <td>RF</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-proposed"></span>
+                    Proposed
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B01"
+                data-suite=""
+                data-aisle="Row E · Rack 10"
+                data-rackid="10000002"
+                data-equipment="Core router 03"
+                data-equipmentid="50000002"
+                data-type="Network"
+                data-status="Future">
+                <td>B01</td>
+                <td></td>
+                <td>Row E · Rack 10</td>
+                <td>10000002</td>
+                <td>Core router 03</td>
+                <td>50000002</td>
+                <td>Network</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-future"></span>
+                    Future
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B02"
+                data-suite=""
+                data-aisle="Row E · Rack 11"
+                data-rackid="20000001"
+                data-equipment="Battery monitoring unit"
+                data-equipmentid="50000003"
+                data-type="Power"
+                data-status="Modified">
+                <td>B02</td>
+                <td></td>
+                <td>Row E · Rack 11</td>
+                <td>20000001</td>
+                <td>Battery monitoring unit</td>
+                <td>50000003</td>
+                <td>Power</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-modified"></span>
+                    Modified
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B01"
+                data-suite="120"
+                data-aisle="Row F · Rack 12"
+                data-rackid="10012003"
+                data-equipment="Management server"
+                data-equipmentid="50012003"
+                data-type="Compute"
+                data-status="Existing retain">
+                <td>B01</td>
+                <td>120</td>
+                <td>Row F · Rack 12</td>
+                <td>10012003</td>
+                <td>Management server</td>
+                <td>50012003</td>
+                <td>Compute</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-existing-retain"></span>
+                    Existing retain
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B01"
+                data-suite="130"
+                data-aisle="Row F · Rack 13"
+                data-rackid="10013002"
+                data-equipment="Monitoring server"
+                data-equipmentid="50013002"
+                data-type="Compute"
+                data-status="Existing retain">
+                <td>B01</td>
+                <td>130</td>
+                <td>Row F · Rack 13</td>
+                <td>10013002</td>
+                <td>Monitoring server</td>
+                <td>50013002</td>
+                <td>Compute</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-existing-retain"></span>
+                    Existing retain
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B03"
+                data-suite="330"
+                data-aisle="Row G · Rack 14"
+                data-rackid="30033001"
+                data-equipment="BBU shelf"
+                data-equipmentid="50033001"
+                data-type="RF"
+                data-status="Existing remove">
+                <td>B03</td>
+                <td>330</td>
+                <td>Row G · Rack 14</td>
+                <td>30033001</td>
+                <td>BBU shelf</td>
+                <td>50033001</td>
+                <td>RF</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-existing-remove"></span>
+                    Existing remove
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+              <tr
+                data-building="B03"
+                data-suite=""
+                data-aisle="Row G · Rack 15"
+                data-rackid="30000001"
+                data-equipment="Spare BBU shelf"
+                data-equipmentid="50000004"
+                data-type="RF"
+                data-status="Future">
+                <td>B03</td>
+                <td></td>
+                <td>Row G · Rack 15</td>
+                <td>30000001</td>
+                <td>Spare BBU shelf</td>
+                <td>50000004</td>
+                <td>RF</td>
+                <td>
+                  <span class="status-pill">
+                    <span class="status-dot dot-future"></span>
+                    Future
+                  </span>
+                </td>
+                <td>
+                  <button class="properties-btn" type="button" title="Properties">
+                    <span class="properties-gear">⚙</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="propertiesPanel" class="properties-panel">
+    <div class="properties-backdrop" onclick="closePropertiesPanel()"></div>
+    <div class="properties-content">
+      <div class="properties-header">
+        <div>
+          <div class="properties-title">Component properties</div>
+          <div id="propertiesSubtitle" class="properties-subtitle">
+            CO-001 – Denver Test ILA
+          </div>
+        </div>
+        <button class="properties-close" type="button" onclick="closePropertiesPanel()">×</button>
+      </div>
+      <div class="properties-body">
+        <div class="properties-row">
+          <span>Building</span>
+          <span id="propBuilding">–</span>
+        </div>
+        <div class="properties-row">
+          <span>Suite</span>
+          <span id="propSuite">–</span>
+        </div>
+        <div class="properties-row">
+          <span>Aisle</span>
+          <span id="propAisle">–</span>
+        </div>
+        <div class="properties-row">
+          <span>Rack ID</span>
+          <span id="propRackId">–</span>
+        </div>
+        <div class="properties-row">
+          <span>Equipment</span>
+          <span id="propEquipment">–</span>
+        </div>
+        <div class="properties-row">
+          <span>Eqyupment ID (PRO)</span>
+          <span id="propEquipmentId">–</span>
+        </div>
+        <div class="properties-row">
+          <span>Type</span>
+          <span id="propType">–</span>
+        </div>
+        <div class="properties-row">
+          <span>4D status</span>
+          <span id="propStatus">–</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="anomalyPanel" class="anomaly-panel">
+    <div class="anomaly-backdrop" onclick="closeAnomalyPanel()"></div>
+    <div class="anomaly-content">
+      <div class="anomaly-header">
+        <div>
+          <div class="anomaly-title">Detected anomalies (3)</div>
+          <div class="anomaly-subtitle">
+            Comparing BIM model vs ProInventory
+          </div>
+        </div>
+        <button class="anomaly-close" type="button" onclick="closeAnomalyPanel()">×</button>
+      </div>
+
+      <div class="anomaly-body">
+        <div class="anomaly-row" data-anomaly-id="a1">
+          <div class="anomaly-row-header">
+            <span class="anomaly-type">In BIM only · Missing ProInventory ID</span>
+            <span class="anomaly-location">B01 · 110 · Row A · Rack 01</span>
+          </div>
+          <div class="anomaly-description">
+            Core router 01 exists in the BIM model but has no linked ProInventory equipment record.
+          </div>
+          <div class="anomaly-action">
+            <label for="anomalyActionA1">Action</label>
+            <select id="anomalyActionA1">
+              <option value="send_to_pro" selected>Send to ProInventory and fetch new ID (default)</option>
+              <option value="ignore">Ignore for now</option>
+              <option value="flag_review">Flag for manual review</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="anomaly-row" data-anomaly-id="a2">
+          <div class="anomaly-row-header">
+            <span class="anomaly-type">In ProInventory only · No BIM geometry</span>
+            <span class="anomaly-location">B02 · 220 · Pro ID 50022001</span>
+          </div>
+          <div class="anomaly-description">
+            Equipment 50022001 (Spare battery string) exists in ProInventory but has no corresponding object in the BIM model.
+          </div>
+          <div class="anomaly-action">
+            <label for="anomalyActionA2">Action</label>
+            <select id="anomalyActionA2">
+              <option value="create_placeholder" selected>Create placeholder in BIM model</option>
+              <option value="ignore">Ignore for now</option>
+              <option value="flag_review">Flag for manual review</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="anomaly-row" data-anomaly-id="a3">
+          <div class="anomaly-row-header">
+            <span class="anomaly-type">ID mismatch</span>
+            <span class="anomaly-location">B03 · 330 · Row G · Rack 14</span>
+          </div>
+          <div class="anomaly-description">
+            BBU shelf has Rack ID 30033001 in BIM but is mapped to rack 30033009 in ProInventory.
+          </div>
+          <div class="anomaly-action">
+            <label for="anomalyActionA3">Action</label>
+            <select id="anomalyActionA3">
+              <option value="align_to_pro" selected>Align BIM IDs to ProInventory</option>
+              <option value="align_to_bim">Align ProInventory to BIM IDs</option>
+              <option value="ignore">Ignore for now</option>
+              <option value="flag_review">Flag for manual review</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="anomaly-footer">
+        <button class="anomaly-submit-btn" type="button" onclick="submitAnomalyActions()">
+          Submit actions
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js"></script>
+
+  <script>
+    /* ----------------------------------------------------------------------------------------------------------------------------------
+       JAVASCRIPT LOGIC
+       The Viewer Initialization code is directly inside DOMContentLoaded to run ONLY ONCE.
+    ---------------------------------------------------------------------------------------------------------------------------------- */
+    const APS_URN = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6bHVtbGNtdjEwMXh5ei9ocV90b3dlci5ydnQ";
+
+    // --- HELPER FUNCTIONS (Non-Viewer logic) ---
+    function toggleInventory() {
+      const mainLayout = document.getElementById('mainLayout');
+      const wrapper = document.getElementById('inventoryWrapper');
+      const isHidden = mainLayout.classList.contains('inventory-hidden');
+
+      if (isHidden) {
+        mainLayout.classList.remove('inventory-hidden');
+        wrapper.classList.remove('hidden');
+        wrapper.classList.add('visible');
+      } else {
+        mainLayout.classList.add('inventory-hidden');
+        wrapper.classList.remove('visible');
+        wrapper.classList.add('hidden');
+      }
+    }
+
+    function toggleColor() {
+      const btn = document.getElementById('colorToggle');
+      const label = document.getElementById('colorToggleLabel');
+      const isOff = btn.classList.contains('off');
+
+      if (isOff) {
+        btn.classList.remove('off');
+        label.textContent = 'Colour: On';
+        document.body.classList.remove('color-off');
+      } else {
+        btn.classList.add('off');
+        label.textContent = 'Colour: Off';
+        document.body.classList.add('color-off');
+      }
+    }
+
+    function setupLayerChips() {
+      const chips = document.querySelectorAll('.status-chip.toggleable');
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          chip.classList.toggle('inactive');
+        });
+      });
+    }
+
+    function setupLayersToggle() {
+      const btn = document.getElementById('layersToggle');
+      const panel = document.getElementById('layersPanel');
+      if (!btn || !panel) return;
+
+      btn.addEventListener('click', () => {
+        const isCollapsed = panel.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed', isCollapsed);
+        btn.textContent = isCollapsed ? 'Layers ▸' : 'Layers ▾';
+      });
+    }
+
+    function setupRowSelection() {
+      const tbody = document.getElementById('inventoryBody');
+      tbody.addEventListener('click', (e) => {
+        const row = e.target.closest('tr');
+        if (!row) return;
+        if (e.target.closest('.properties-btn')) return;
+
+        tbody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
+        row.classList.add('selected-row');
+      });
+    }
+
+    function setupDividerResize() {
+      const divider = document.getElementById('divider');
+      const inventory = document.getElementById('inventoryWrapper');
+      let isDragging = false;
+      let startY = 0;
+      let startHeight = 0;
+
+      divider.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startY = e.clientY;
+        startHeight = inventory.offsetHeight;
+        document.body.style.userSelect = 'none';
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dy = e.clientY - startY;
+        let newHeight = startHeight - dy;
+
+        const minHeight = 120;
+        const maxHeight = window.innerHeight * 0.6;
+        if (newHeight < minHeight) newHeight = minHeight;
+        if (newHeight > maxHeight) newHeight = maxHeight;
+
+        inventory.style.height = newHeight + 'px';
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        document.body.style.userSelect = '';
+      });
+    }
+
+    function openPropertiesPanelFromRow(row) {
+      const panel = document.getElementById('propertiesPanel');
+      const b   = row.dataset.building     || '–';
+      const s   = row.dataset.suite        || '–';
+      const a   = row.dataset.aisle        || '–';
+      const rid = row.dataset.rackid       || '–';
+      const e   = row.dataset.equipment    || '–';
+      const eid = row.dataset.equipmentid  || '–';
+      const t   = row.dataset.type         || '–';
+      const st  = row.dataset.status       || '–';
+
+      document.getElementById('propBuilding').textContent    = b;
+      document.getElementById('propSuite').textContent       = s || '–';
+      document.getElementById('propAisle').textContent       = a;
+      document.getElementById('propRackId').textContent      = rid;
+      document.getElementById('propEquipment').textContent   = e;
+      document.getElementById('propEquipmentId').textContent = eid;
+      document.getElementById('propType').textContent        = t;
+      document.getElementById('propStatus').textContent      = st;
+
+      const subtitle = `${b} · ${a}`;
+      document.getElementById('propertiesSubtitle').textContent = subtitle;
+
+      panel.classList.add('open');
+    }
+
+    function closePropertiesPanel() {
+      const panel = document.getElementById('propertiesPanel');
+      panel.classList.remove('open');
+    }
+
+    function setupPropertiesButtons() {
+      const tbody = document.getElementById('inventoryBody');
+      tbody.addEventListener('click', (e) => {
+        const btn = e.target.closest('.properties-btn');
+        if (!btn) return;
+
+        e.stopPropagation();
+        const row = btn.closest('tr');
+        if (!row) return;
+
+        tbody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
+        row.classList.add('selected-row');
+
+        openPropertiesPanelFromRow(row);
+      });
+    }
+
+    function openAnomalyPanel() {
+      const panel = document.getElementById('anomalyPanel');
+      panel.classList.add('open');
+    }
+
+    function closeAnomalyPanel() {
+      const panel = document.getElementById('anomalyPanel');
+      panel.classList.remove('open');
+    }
+
+    function setupAnomalyChip() {
+      const chip = document.getElementById('anomalyChip');
+      if (!chip) return;
+      chip.addEventListener('click', openAnomalyPanel);
+    }
+
+    function submitAnomalyActions() {
+      const rows = document.querySelectorAll('.anomaly-row');
+      const actions = [];
+      rows.forEach(row => {
+        const id = row.dataset.anomalyId;
+        const select = row.querySelector('select');
+        actions.push({
+          anomalyId: id,
+          action: select ? select.value : null
+        });
+      });
+
+      console.log('Anomaly actions submitted (mock):', actions);
+      alert('Anomaly actions submitted.\n\nIn a real implementation this would trigger a bot to sync BIM and ProInventory based on your selections.');
+      closeAnomalyPanel();
+    }
+
+    // --- MAIN INITIALIZATION BLOCK ---
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Setup all non-viewer related functions
+      setupLayerChips();
+      setupLayersToggle();
+      setupRowSelection();
+      setupDividerResize();
+      setupPropertiesButtons();
+      setupAnomalyChip();
+      
+      // 2. Viewer Initialization (GUARANTEED TO RUN ONLY ONCE)
+      // Check if Autodesk object is available before trying to initialize
+      if (typeof Autodesk === 'undefined' || typeof Autodesk.Viewing === 'undefined') {
+        console.error('Autodesk Viewer library not loaded. Check script tag and network connection.');
+        const viewerDiv = document.getElementById("forgeViewer");
+        viewerDiv.innerHTML = '<div style="color:white; padding: 20px;">🚨 Viewer Library Not Loaded 🚨<br>Check network and script tag for viewer3D.min.js.</div>';
+        return;
+      }
+      
+      const options = {
+        env: "AutodeskProduction2",
+        api: "streamingV2",
+        
+        // Fetch token from your secure Node.js endpoint
+        getAccessToken: function (onTokenReady) {
+          fetch("/api/aps/token") 
+            .then((res) => {
+              if (!res.ok) {
+                // If server status is not 200, throw an error
+                throw new Error('Failed to fetch token from server. Status: ' + res.status);
+              }
+              return res.json();
+            })
+            .then((data) => {
+              const token = data.access_token;
+              const expiry = data.expires_in; 
+              onTokenReady(token, expiry); 
+            })
+            .catch((error) => {
+              console.error('Error in token fetching:', error);
+              // Display error in the viewer div
+              const viewerDiv = document.getElementById("forgeViewer");
+              viewerDiv.innerHTML = '<div style="color:white; padding: 20px;">🚨 FAILED TO GET TOKEN 🚨<br>Check your Node.js server console and .env file.</div>';
+            });
+        }
+      };
+
+      // This call should run exactly once after the DOM and APS script are loaded
+      Autodesk.Viewing.Initializer(options, function () {
+        const container = document.getElementById("forgeViewer");
+        const viewer = new Autodesk.Viewing.GuiViewer3D(container);
+        const startedCode = viewer.start();
+        if (startedCode > 0) {
+          console.error("Failed to start viewer, code:", startedCode);
+          return;
+        }
+
+        const documentId = "urn:" + APS_URN; 
+        Autodesk.Viewing.Document.load(
+          documentId,
+          function onDocumentLoadSuccess(doc) {
+            const defaultModel = doc.getRoot().getDefaultGeometry();
+            viewer.loadDocumentNode(doc, defaultModel);
+          },
+          function onDocumentLoadFailure(err) {
+            console.error("Failed to load document:", err);
+            const viewerDiv = document.getElementById("forgeViewer");
+            viewerDiv.innerHTML = '<div style="color:white; padding: 20px;">🚨 FAILED TO LOAD MODEL 🚨<br>Check the APS_URN or derivative status.</div>';
+          }
+        );
+      });
+    });
+  </script>
+</body>
+</html>

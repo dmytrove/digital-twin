@@ -1,13 +1,35 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/bim-viewer-demo/',
+  base: './',
   build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: true
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Three.js related chunks for better caching
+          'three': ['three'],
+          'react-three': ['@react-three/fiber', '@react-three/drei'],
+          // React ecosystem
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // State management and utilities
+          'store': ['zustand'],
+          // Map related dependencies
+          'leaflet': ['leaflet', 'react-leaflet'],
+          // UI libraries
+          'ui': ['lucide-react']
+        }
+      }
+    },
+    // Optimize chunks
+    chunkSizeWarningLimit: 800,
+    target: 'esnext',
+    minify: 'esbuild'
+  },
+  // Enable tree shaking
+  define: {
+    __DEV__: false
   }
-})
+});

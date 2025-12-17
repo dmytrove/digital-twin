@@ -6,7 +6,8 @@
       "Bash(npm install:*)",
       "Bash(rm:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(npx vite build:*)"
     ],
     "deny": [],
     "ask": []

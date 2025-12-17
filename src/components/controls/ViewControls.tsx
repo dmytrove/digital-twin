@@ -5,20 +5,22 @@ export function ViewControls() {
   const { buildingVisible, toggleBuilding } = useBIMStore();
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <h3 className="text-lg font-semibold mb-3">View Options</h3>
+    <div className="mb-4">
+      <h3 className="text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
+        <Building2 size={16} className="text-blue-600" />
+        View Options
+      </h3>
       <button
         onClick={toggleBuilding}
-        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+        className={`pill-button ${
+          buildingVisible ? 'pill-button-active' : 'pill-button-inactive'
+        }`}
       >
-        <div className="flex items-center gap-3">
-          <Building2 size={20} className="text-gray-600" />
-          <span className="font-medium">Building Shell</span>
-        </div>
+        <span>Building Shell</span>
         {buildingVisible ? (
-          <Eye size={18} className="text-blue-600" />
+          <Eye size={14} className="text-gray-500" />
         ) : (
-          <EyeOff size={18} className="text-gray-400" />
+          <EyeOff size={14} className="text-gray-400" />
         )}
       </button>
     </div>

@@ -1,10 +1,8 @@
-import { useState } from 'react';
-import { Table2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Table2 } from 'lucide-react';
 import { useBIMStore } from '../../store/bimStore';
 import type { BIMEquipment } from '../../types/bim';
 
 export function InventoryTable() {
-  const [isExpanded, setIsExpanded] = useState(false);
   const { currentSite, selectedEquipmentId, selectEquipment, colorScheme, layerVisibility } = useBIMStore();
 
   if (!currentSite) return null;
@@ -13,38 +11,23 @@ export function InventoryTable() {
     eq => layerVisibility[eq.fourDStatus]
   );
 
-  const displayedEquipment = isExpanded ? visibleEquipment : visibleEquipment.slice(0, 5);
-
   const handleRowClick = (equipment: BIMEquipment) => {
     selectEquipment(equipment.id);
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b">
+    <div className="h-full flex flex-col bg-white">
+      <div className="flex items-center justify-between p-3 border-b flex-shrink-0">
         <div className="flex items-center gap-2">
-          <Table2 size={20} className="text-blue-600" />
-          <h3 className="text-lg font-semibold">Equipment Inventory</h3>
+          <Table2 size={18} className="text-blue-600" />
+          <h3 className="text-base font-semibold">Equipment Inventory</h3>
+          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+            {visibleEquipment.length} items
+          </span>
         </div>
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-        >
-          {isExpanded ? (
-            <>
-              <ChevronUp size={16} />
-              Show Less
-            </>
-          ) : (
-            <>
-              <ChevronDown size={16} />
-              Show All ({visibleEquipment.length})
-            </>
-          )}
-        </button>
       </div>
       
-      <div className="overflow-x-auto">
+      <div className="flex-1 overflow-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -58,13 +41,13 @@ export function InventoryTable() {
             </tr>
           </thead>
           <tbody>
-            {displayedEquipment.map(equipment => (
+            {visibleEquipment.map(equipment => (
               <tr
                 key={equipment.id}
                 onClick={() => handleRowClick(equipment)}
                 className={`
                   border-b cursor-pointer hover:bg-gray-50 transition-colors
-                  ${selectedEquipmentId === equipment.id ? 'bg-yellow-50' : ''}
+                  ${selectedEquipmentId === equipment.id ? 'bg-yellow-50 font-semibold' : ''}
                 `}
               >
                 <td className="px-3 py-2 font-medium">{equipment.name}</td>
@@ -88,12 +71,6 @@ export function InventoryTable() {
           </tbody>
         </table>
       </div>
-      
-      {!isExpanded && visibleEquipment.length > 5 && (
-        <div className="p-2 text-center text-sm text-gray-500 border-t">
-          Showing 5 of {visibleEquipment.length} items
-        </div>
-      )}
     </div>
   );
 }

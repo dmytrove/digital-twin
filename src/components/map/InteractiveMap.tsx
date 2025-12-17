@@ -3,12 +3,44 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Site } from '../../types/bim';
 
-// Fix for default markers in React-Leaflet
+// Fix for default markers in React-Leaflet - use local fallback for tracking prevention
 delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+// Create a simple SVG marker to avoid CORS/tracking prevention issues
+const createSVGMarker = () => {
+  const svgIcon = L.divIcon({
+    html: `
+      <div style="
+        background: #3b82f6;
+        width: 24px;
+        height: 24px;
+        border-radius: 50% 50% 50% 0;
+        border: 2px solid white;
+        transform: rotate(-45deg);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      ">
+        <div style="
+          width: 8px;
+          height: 8px;
+          background: white;
+          border-radius: 50%;
+          position: absolute;
+          top: 6px;
+          left: 6px;
+        "></div>
+      </div>
+    `,
+    className: 'custom-marker',
+    iconSize: [24, 24],
+    iconAnchor: [12, 24]
+  });
+  return svgIcon;
+};
+
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl: undefined,
+  iconUrl: undefined, 
+  shadowUrl: undefined,
 });
 
 interface InteractiveMapProps {
@@ -37,6 +69,7 @@ export function InteractiveMap({ sites, onSiteSelect }: InteractiveMapProps) {
           <Marker
             key={site.id}
             position={[site.coordinates.lat, site.coordinates.lng]}
+            icon={createSVGMarker()}
             eventHandlers={{
               click: () => onSiteSelect(site.id)
             }}

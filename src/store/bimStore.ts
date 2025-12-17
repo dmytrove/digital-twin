@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { Site, BIMEquipment, FourDStatus, ColorScheme } from '../types/bim';
 import { DEFAULT_COLOR_SCHEME } from '../types/bim';
 import { generateSyntheticSites } from '../data/syntheticData';
@@ -38,25 +39,31 @@ interface BIMStore {
   refreshSite: () => void;
 }
 
-export const useBIMStore = create<BIMStore>((set, get) => ({
-  sites: [],
-  currentSite: null,
-  selectedEquipmentId: null,
-  layerVisibility: {
-    'existing-retained': true,
-    'existing-removed': true,
-    'proposed': true,
-    'future': true,
-    'modified': true,
-  },
-  colorMode: 'fourDStatus',
-  colorScheme: DEFAULT_COLOR_SCHEME,
-  buildingVisible: true,
+export const useBIMStore = create<BIMStore>()(
+  persist(
+    (set, get) => ({
+      sites: [],
+      currentSite: null,
+      selectedEquipmentId: null,
+      layerVisibility: {
+        'existing-retained': true,
+        'existing-removed': true,
+        'proposed': true,
+        'future': true,
+        'modified': true,
+      },
+      colorMode: 'fourDStatus',
+      colorScheme: DEFAULT_COLOR_SCHEME,
+      buildingVisible: true,
 
-  loadSites: () => {
-    const sites = generateSyntheticSites();
-    set({ sites });
-  },
+      loadSites: () => {
+        // Only generate sites if they don't exist
+        const existingSites = get().sites;
+        if (existingSites.length === 0) {
+          const sites = generateSyntheticSites();
+          set({ sites });
+        }
+      },
 
   selectSite: (siteId: string) => {
     const site = get().sites.find(s => s.id === siteId);
@@ -237,4 +244,16 @@ export const useBIMStore = create<BIMStore>((set, get) => ({
       get().selectSite(currentSiteId);
     }
   }
-}));
+}),
+    {
+      name: 'bim-storage', // localStorage key
+      partialize: (state) => ({
+        // Only persist sites and layer visibility, not current selections
+        sites: state.sites,
+        layerVisibility: state.layerVisibility,
+        colorMode: state.colorMode,
+        buildingVisible: state.buildingVisible,
+      })
+    }
+  )
+);

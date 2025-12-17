@@ -1,41 +1,46 @@
-import { Palette } from 'lucide-react';
+import { Palette, Activity, User } from 'lucide-react';
 import { useBIMStore } from '../../store/bimStore';
 
 export function ColorControls() {
   const { colorMode, setColorMode } = useBIMStore();
 
   const colorModes = [
-    { value: 'fourDStatus', label: '4D Status', description: 'Color by deployment status' },
-    { value: 'customer', label: 'Customer', description: 'Color by customer (Demo)' },
-    { value: 'powerConsumption', label: 'Power Usage', description: 'Color by power consumption' }
+    { id: 'fourDStatus', label: '4D Status', icon: Palette, description: 'Color by deployment status' },
+    { id: 'customer', label: 'Customer', icon: User, description: 'Color by customer (Demo)' },
+    { id: 'powerConsumption', label: 'Power Usage', icon: Activity, description: 'Color by power consumption' },
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Palette size={20} className="text-blue-600" />
-        <h3 className="text-lg font-semibold">Color Coding</h3>
-      </div>
-      <div className="space-y-2">
-        {colorModes.map(mode => (
-          <label
-            key={mode.value}
-            className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
-          >
-            <input
-              type="radio"
-              name="colorMode"
-              value={mode.value}
-              checked={colorMode === mode.value}
-              onChange={() => setColorMode(mode.value as any)}
-              className="mt-1"
-            />
-            <div>
-              <div className="font-medium text-sm">{mode.label}</div>
-              <div className="text-xs text-gray-500">{mode.description}</div>
-            </div>
-          </label>
-        ))}
+    <div className="mb-6 pb-6 border-b border-gray-200">
+      <h3 className="text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
+        <Palette size={16} className="text-blue-600" />
+        Color Coding
+      </h3>
+      
+      <div className="flex flex-wrap gap-2">
+        {colorModes.map(mode => {
+          const Icon = mode.icon;
+          const isActive = colorMode === mode.id;
+          
+          return (
+            <button
+              key={mode.id}
+              onClick={() => setColorMode(mode.id as any)}
+              className={`pill-button ${
+                isActive 
+                  ? 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100' 
+                  : 'pill-button-active'
+              }`}
+              title={mode.description}
+            >
+              <Icon size={14} />
+              <span>{mode.label}</span>
+              {isActive && (
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
