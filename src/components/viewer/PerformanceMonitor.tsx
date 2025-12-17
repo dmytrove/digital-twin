@@ -64,7 +64,7 @@ export const PerformanceMonitor = ({ onStatsUpdate }: { onStatsUpdate?: (stats: 
 
 // Performance overlay component
 export const PerformanceOverlay = () => {
-  const [stats, setStats] = useState<PerformanceStats | null>(null);
+  const [stats] = useState<PerformanceStats | null>(null);
   const [visible, setVisible] = useState(false);
 
   // Show/hide with Ctrl+P

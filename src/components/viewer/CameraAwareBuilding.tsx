@@ -1,5 +1,3 @@
-import { useThree, useFrame } from '@react-three/fiber';
-import { useState, useRef } from 'react';
 import * as THREE from 'three';
 
 interface BuildingProps {
@@ -11,7 +9,6 @@ interface BuildingProps {
 }
 
 export function CameraAwareBuilding({ building }: BuildingProps) {
-  const { camera } = useThree();
   // Simple static opacity for now to avoid re-render issues
   const wallOpacities = {
     front: 0.1,
