@@ -39,12 +39,23 @@ const Equipment3DComponent = ({ equipment, visible }: Equipment3DProps) => {
   const isSelected = selectedEquipmentId === equipment.id;
 
   // Get geometry based on actual equipment dimensions
+  // Note: In Three.js BoxGeometry(width, height, depth):
+  // - width = X axis (horizontal across rack front, should be ~0.48m for 19" standard)
+  // - height = Y axis (vertical, varies by rack units 1U-4U)
+  // - depth = Z axis (front-to-back into rack, varies 0.08m-0.9m by equipment type)
   const geometry = useMemo(() => {
-    return getGeometry(
-      equipment.dimensions.width,
-      equipment.dimensions.height,
-      equipment.dimensions.depth
-    );
+    // Ensure valid dimensions with fallbacks
+    const width = Number.isFinite(equipment.dimensions.width) && equipment.dimensions.width > 0 
+      ? equipment.dimensions.width 
+      : 0.48;
+    const height = Number.isFinite(equipment.dimensions.height) && equipment.dimensions.height > 0 
+      ? equipment.dimensions.height 
+      : 0.048;
+    const depth = Number.isFinite(equipment.dimensions.depth) && equipment.dimensions.depth > 0 
+      ? equipment.dimensions.depth 
+      : 0.7;
+    
+    return getGeometry(width, height, depth);
   }, [equipment.dimensions.width, equipment.dimensions.height, equipment.dimensions.depth]);
 
   // Create edges geometry - always show for contrast
