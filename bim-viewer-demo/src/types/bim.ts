@@ -81,9 +81,9 @@ export interface ColorScheme {
 }
 
 export const DEFAULT_COLOR_SCHEME: ColorScheme = {
-  'existing-retained': '#808080',
-  'existing-removed': '#ff4444',
-  'proposed': '#44ff44',
-  'future': '#ffaa44',
-  'modified': '#4444ff'
+  'existing-retained': '#64748b',
+  'existing-removed': '#dc2626',
+  'proposed': '#16a34a',
+  'future': '#ea580c',
+  'modified': '#2563eb'
 };

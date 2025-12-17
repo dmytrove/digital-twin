@@ -67,7 +67,7 @@ export function SitePage() {
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-6">
-            <div className="bg-gray-900 rounded-lg shadow-lg overflow-hidden" style={{ height: '600px' }}>
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200" style={{ height: '600px' }}>
               <BIMViewer />
             </div>
             

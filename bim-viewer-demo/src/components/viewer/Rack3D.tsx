@@ -22,8 +22,8 @@ export function Rack3D({ rack, visible }: Rack3DProps) {
       position={[rack.position.x, rack.position.y + rack.dimensions.height / 2, rack.position.z]}
     >
       <meshStandardMaterial
-        color="#333333"
-        opacity={0.3}
+        color="#475569"
+        opacity={0.4}
         transparent
         wireframe
       />

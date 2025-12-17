@@ -41,11 +41,15 @@ export function Equipment3D({ equipment, visible }: Equipment3DProps) {
         args={[equipment.dimensions.width, equipment.dimensions.height, equipment.dimensions.depth]}
         position={[equipment.position.x, equipment.position.y, equipment.position.z]}
         onClick={handleClick}
+        receiveShadow
+        castShadow
       >
         <meshStandardMaterial
           color={getColor()}
-          emissive={isSelected ? '#ffff00' : '#000000'}
-          emissiveIntensity={isSelected ? 0.3 : 0}
+          emissive={isSelected ? '#fbbf24' : '#000000'}
+          emissiveIntensity={isSelected ? 0.2 : 0}
+          metalness={0.1}
+          roughness={0.3}
         />
       </Box>
       

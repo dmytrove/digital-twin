@@ -19,8 +19,8 @@ export function Building3D({ building, visible }: Building3DProps) {
       ]}
     >
       <meshStandardMaterial
-        color="#e0e0e0"
-        opacity={0.1}
+        color="#f1f5f9"
+        opacity={0.15}
         transparent
         wireframe
       />

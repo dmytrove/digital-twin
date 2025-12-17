@@ -1,3 +1,6 @@
+/* Leaflet CSS import */
+@import 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css';
+
 /* Base styles */
 * {
   margin: 0;
@@ -154,4 +157,21 @@ body {
   .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .lg\:col-span-3 { grid-column: span 3 / span 3; }
+}
+
+/* Custom height classes */
+.h-\[600px\] { height: 600px; }
+
+/* Leaflet popup styling */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+}
+
+/* Fix for marker icons */
+.leaflet-default-icon-path {
+  background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png');
 }
