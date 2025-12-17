@@ -30,6 +30,11 @@ export interface BIMEquipment {
   dimensions: Dimensions;
   fourDStatus: FourDStatus;
   previousPosition?: Position3D;
+  /** Planned relocation (not committed until Apply Design Changes). */
+  plannedMove?: {
+    targetRackId: string;
+    targetRackUnit: number;
+  };
   powerConsumption: number;
   customer?: string;
   serialNumber: string;

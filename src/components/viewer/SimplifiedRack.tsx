@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { useThree } from '@react-three/fiber';
 import { useMemo, memo } from 'react';
+import type { Rack } from '../../types/bim';
 
 interface SimplifiedRackProps {
-  rack: any;
+  rack: Rack;
 }
 
 // Create canvas texture for label
@@ -148,14 +149,14 @@ const SimplifiedRackComponent = ({ rack }: SimplifiedRackProps) => {
         />
       </lineSegments>
       
-      {/* Rack ID label - sprite based, only when close enough */}
+      {/* Rack label - sprite based, only when close enough */}
       {showRackLabel && (
         <sprite
           position={[0, 1.15, 0]}
           scale={[0.5, 0.125, 1]}
         >
           <spriteMaterial
-            map={getLabelTexture(rack.id, 36, '#000000')}
+            map={getLabelTexture(rack.name || rack.id, 36, '#000000')}
             transparent={true}
             opacity={0.95}
             depthTest={true}

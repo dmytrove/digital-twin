@@ -12,55 +12,61 @@ function generateAssetTag(): string {
   return `AT${Math.floor(Math.random() * 900000) + 100000}`;
 }
 
+// Equipment footprint normalization
+// Per demo requirements: only unit height should vary visually.
+// Keep a single consistent width/depth for all rack-mounted equipment.
+const STANDARD_EQUIPMENT_WIDTH = 0.48;
+const STANDARD_EQUIPMENT_DEPTH = 0.8;
+
 const equipmentTemplates = [
   // 1U Servers (blade servers, compact servers) - standard depth
-  { type: 'server', manufacturer: 'Dell', models: ['PowerEdge R640', 'PowerEdge R650'], unitHeight: 1, power: 550, width: 0.48, depth: 0.7 },
-  { type: 'server', manufacturer: 'HP', models: ['ProLiant DL360 Gen10', 'ProLiant DL365 Gen10 Plus'], unitHeight: 1, power: 500, width: 0.48, depth: 0.72 },
+  { type: 'server', manufacturer: 'Dell', models: ['PowerEdge R640', 'PowerEdge R650'], unitHeight: 1, power: 550 },
+  { type: 'server', manufacturer: 'HP', models: ['ProLiant DL360 Gen10', 'ProLiant DL365 Gen10 Plus'], unitHeight: 1, power: 500 },
   
   // 2U Servers (standard rack servers) - deeper for more drives
-  { type: 'server', manufacturer: 'Dell', models: ['PowerEdge R740', 'PowerEdge R740xd', 'PowerEdge R750'], unitHeight: 2, power: 750, width: 0.48, depth: 0.75 },
-  { type: 'server', manufacturer: 'HP', models: ['ProLiant DL380 Gen10', 'ProLiant DL385 Gen10 Plus'], unitHeight: 2, power: 800, width: 0.48, depth: 0.73 },
-  { type: 'server', manufacturer: 'Lenovo', models: ['ThinkSystem SR650', 'ThinkSystem SR630'], unitHeight: 2, power: 750, width: 0.48, depth: 0.74 },
+  { type: 'server', manufacturer: 'Dell', models: ['PowerEdge R740', 'PowerEdge R740xd', 'PowerEdge R750'], unitHeight: 2, power: 750 },
+  { type: 'server', manufacturer: 'HP', models: ['ProLiant DL380 Gen10', 'ProLiant DL385 Gen10 Plus'], unitHeight: 2, power: 800 },
+  { type: 'server', manufacturer: 'Lenovo', models: ['ThinkSystem SR650', 'ThinkSystem SR630'], unitHeight: 2, power: 750 },
   
   // 4U Servers (high-capacity servers) - full depth
-  { type: 'server', manufacturer: 'Dell', models: ['PowerEdge R840', 'PowerEdge R940'], unitHeight: 4, power: 1600, width: 0.48, depth: 0.8 },
-  { type: 'server', manufacturer: 'HP', models: ['ProLiant DL580 Gen10'], unitHeight: 4, power: 1800, width: 0.48, depth: 0.8 },
+  { type: 'server', manufacturer: 'Dell', models: ['PowerEdge R840', 'PowerEdge R940'], unitHeight: 4, power: 1600 },
+  { type: 'server', manufacturer: 'HP', models: ['ProLiant DL580 Gen10'], unitHeight: 4, power: 1800 },
   
   // Network Switches (1U) - shallow depth
-  { type: 'switch', manufacturer: 'Cisco', models: ['Catalyst 9300', 'Nexus 93180YC-FX'], unitHeight: 1, power: 350, width: 0.48, depth: 0.4 },
-  { type: 'switch', manufacturer: 'Arista', models: ['7050SX3-48YC12', '7280SR3-48YC8'], unitHeight: 1, power: 400, width: 0.48, depth: 0.42 },
-  { type: 'switch', manufacturer: 'Juniper', models: ['EX4300-48T', 'QFX5120-48Y'], unitHeight: 1, power: 380, width: 0.48, depth: 0.38 },
+  { type: 'switch', manufacturer: 'Cisco', models: ['Catalyst 9300', 'Nexus 93180YC-FX'], unitHeight: 1, power: 350 },
+  { type: 'switch', manufacturer: 'Arista', models: ['7050SX3-48YC12', '7280SR3-48YC8'], unitHeight: 1, power: 400 },
+  { type: 'switch', manufacturer: 'Juniper', models: ['EX4300-48T', 'QFX5120-48Y'], unitHeight: 1, power: 380 },
   
   // Core Switches (2U) - medium depth
-  { type: 'switch', manufacturer: 'Cisco', models: ['Nexus 9336C-FX2', 'Catalyst 9500-40X'], unitHeight: 2, power: 650, width: 0.48, depth: 0.5 },
+  { type: 'switch', manufacturer: 'Cisco', models: ['Nexus 9336C-FX2', 'Catalyst 9500-40X'], unitHeight: 2, power: 650 },
   
   // Routers (2U) - medium depth
-  { type: 'router', manufacturer: 'Cisco', models: ['ISR 4451', 'ASR 1001-X', 'ISR 4431'], unitHeight: 2, power: 450, width: 0.48, depth: 0.52 },
-  { type: 'router', manufacturer: 'Juniper', models: ['MX204', 'MX150'], unitHeight: 2, power: 500, width: 0.48, depth: 0.5 },
+  { type: 'router', manufacturer: 'Cisco', models: ['ISR 4451', 'ASR 1001-X', 'ISR 4431'], unitHeight: 2, power: 450 },
+  { type: 'router', manufacturer: 'Juniper', models: ['MX204', 'MX150'], unitHeight: 2, power: 500 },
   
   // Firewalls (1U and 2U) - compact depth
-  { type: 'firewall', manufacturer: 'Palo Alto', models: ['PA-5220', 'PA-3220'], unitHeight: 1, power: 300, width: 0.48, depth: 0.45 },
-  { type: 'firewall', manufacturer: 'Fortinet', models: ['FortiGate 600E', 'FortiGate 1800F'], unitHeight: 1, power: 280, width: 0.48, depth: 0.43 },
-  { type: 'firewall', manufacturer: 'Checkpoint', models: ['6600 Appliance', '16600 Appliance'], unitHeight: 2, power: 550, width: 0.48, depth: 0.5 },
+  { type: 'firewall', manufacturer: 'Palo Alto', models: ['PA-5220', 'PA-3220'], unitHeight: 1, power: 300 },
+  { type: 'firewall', manufacturer: 'Fortinet', models: ['FortiGate 600E', 'FortiGate 1800F'], unitHeight: 1, power: 280 },
+  { type: 'firewall', manufacturer: 'Checkpoint', models: ['6600 Appliance', '16600 Appliance'], unitHeight: 2, power: 550 },
   
   // Storage Arrays (2U to 4U) - extra deep for drives
-  { type: 'storage', manufacturer: 'NetApp', models: ['FAS8200', 'FAS8300'], unitHeight: 2, power: 800, width: 0.48, depth: 0.85 },
-  { type: 'storage', manufacturer: 'Dell EMC', models: ['PowerStore 3200T', 'Unity XT 480'], unitHeight: 2, power: 850, width: 0.48, depth: 0.82 },
-  { type: 'storage', manufacturer: 'NetApp', models: ['AFF A800', 'FAS9500'], unitHeight: 4, power: 1600, width: 0.48, depth: 0.9 },
-  { type: 'storage', manufacturer: 'Pure Storage', models: ['FlashArray//X90', 'FlashBlade//S'], unitHeight: 3, power: 1400, width: 0.48, depth: 0.88 },
+  { type: 'storage', manufacturer: 'NetApp', models: ['FAS8200', 'FAS8300'], unitHeight: 2, power: 800 },
+  { type: 'storage', manufacturer: 'Dell EMC', models: ['PowerStore 3200T', 'Unity XT 480'], unitHeight: 2, power: 850 },
+  { type: 'storage', manufacturer: 'NetApp', models: ['AFF A800', 'FAS9500'], unitHeight: 4, power: 1600 },
+  { type: 'storage', manufacturer: 'Pure Storage', models: ['FlashArray//X90', 'FlashBlade//S'], unitHeight: 3, power: 1400 },
   
   // UPS Systems (2U to 6U) - medium depth
-  { type: 'ups', manufacturer: 'APC', models: ['Smart-UPS SRT 2200', 'Smart-UPS SRT 3000'], unitHeight: 2, power: 0, width: 0.48, depth: 0.6 },
-  { type: 'ups', manufacturer: 'APC', models: ['Smart-UPS SRT 5000', 'Smart-UPS SRT 6000'], unitHeight: 4, power: 0, width: 0.48, depth: 0.65 },
-  { type: 'ups', manufacturer: 'Eaton', models: ['9PX 3000RT', '93PR 6000'], unitHeight: 3, power: 0, width: 0.48, depth: 0.62 },
+  { type: 'ups', manufacturer: 'APC', models: ['Smart-UPS SRT 2200', 'Smart-UPS SRT 3000'], unitHeight: 2, power: 0 },
+  { type: 'ups', manufacturer: 'APC', models: ['Smart-UPS SRT 5000', 'Smart-UPS SRT 6000'], unitHeight: 4, power: 0 },
+  { type: 'ups', manufacturer: 'Eaton', models: ['9PX 3000RT', '93PR 6000'], unitHeight: 3, power: 0 },
   
   // PDUs (1U or 0U vertical mount) - very shallow
-  { type: 'pdu', manufacturer: 'APC', models: ['AP8841 Metered PDU', 'AP8861 Switched PDU'], unitHeight: 1, power: 0, width: 0.45, depth: 0.15 },
-  { type: 'pdu', manufacturer: 'Raritan', models: ['PX3-5466', 'PX3-5776'], unitHeight: 1, power: 0, width: 0.45, depth: 0.12 },
+  { type: 'pdu', manufacturer: 'APC', models: ['AP8841 Metered PDU', 'AP8861 Switched PDU'], unitHeight: 1, power: 0 },
+  { type: 'pdu', manufacturer: 'Raritan', models: ['PX3-5466', 'PX3-5776'], unitHeight: 1, power: 0 },
   
   // Patch Panels (1U) - very shallow
-  { type: 'patch-panel', manufacturer: 'Panduit', models: ['CP48WSBLY', 'CP24WSBLY'], unitHeight: 1, power: 0, width: 0.48, depth: 0.1 },
-  { type: 'patch-panel', manufacturer: 'Leviton', models: ['49255-H48', '49255-H24'], unitHeight: 1, power: 0, width: 0.48, depth: 0.08 }
+  { type: 'patch-panel', manufacturer: 'Panduit', models: ['CP48WSBLY', 'CP24WSBLY'], unitHeight: 1, power: 0 },
+  { type: 'patch-panel', manufacturer: 'Leviton', models: ['49255-H48', '49255-H24'], unitHeight: 1, power: 0 }
 ];
 
 function createEquipment(
@@ -91,9 +97,9 @@ function createEquipment(
       z: rackPosition.z
     },
     dimensions: {
-      width: equipmentTemplate.width,
+      width: STANDARD_EQUIPMENT_WIDTH,
       height: equipmentTemplate.unitHeight * (2.0 / 42), // Each U is 2.0/42 units tall
-      depth: equipmentTemplate.depth
+      depth: STANDARD_EQUIPMENT_DEPTH
     },
     fourDStatus: status,
     powerConsumption: equipmentTemplate.power,
