@@ -9,7 +9,10 @@ A cutting-edge 3D BIM visualization application demonstrating the future of desi
 
 ## 🚀 Live Demo
 
-**[View Live Demo](https://yourusername.github.io/bim-viewer-demo/)**
+**[View Live Demo](https://yourusername.github.io/your-repo-name/)**
+
+<!-- Replace 'yourusername' with your GitHub username and 'your-repo-name' with your repository name -->
+<!-- If using a custom domain, replace the entire URL -->
 
 ## 📋 Overview
 
