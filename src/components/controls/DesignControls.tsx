@@ -5,12 +5,17 @@ import type { BIMEquipment } from '../../types/bim';
 
 export function DesignControls() {
   const [isAddingEquipment, setIsAddingEquipment] = useState(false);
+  const [isMovingEquipment, setIsMovingEquipment] = useState(false);
   const [newEquipmentData, setNewEquipmentData] = useState({
     name: '',
     type: 'server' as BIMEquipment['type'],
     rackId: '',
     rackUnit: 1,
     unitHeight: 2
+  });
+  const [moveData, setMoveData] = useState({
+    newRackId: '',
+    newRackUnit: 1
   });
 
   // Realistic equipment presets
@@ -61,6 +66,7 @@ export function DesignControls() {
     addEquipment,
     removeEquipment,
     updateEquipmentStatus,
+    moveEquipment,
     applyDesignChanges,
     refreshSite
   } = useBIMStore();
@@ -117,7 +123,23 @@ export function DesignControls() {
 
   const handleStatusChange = (status: BIMEquipment['fourDStatus']) => {
     if (selectedEquipmentId) {
-      updateEquipmentStatus(selectedEquipmentId, status);
+      // If selecting "Modified", show move interface instead
+      if (status === 'modified') {
+        setIsMovingEquipment(true);
+        setMoveData({
+          newRackId: selectedEquipment?.rackId || '',
+          newRackUnit: selectedEquipment?.rackUnit || 1
+        });
+      } else {
+        updateEquipmentStatus(selectedEquipmentId, status);
+      }
+    }
+  };
+
+  const handleMoveEquipment = () => {
+    if (selectedEquipmentId && moveData.newRackId) {
+      moveEquipment(selectedEquipmentId, moveData.newRackId, moveData.newRackUnit);
+      setIsMovingEquipment(false);
     }
   };
 
@@ -227,7 +249,7 @@ export function DesignControls() {
           </div>
         )}
 
-        {selectedEquipment && (
+        {selectedEquipment && !isMovingEquipment && (
           <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-gray-700">Selected Equipment</h4>
@@ -236,6 +258,11 @@ export function DesignControls() {
               </span>
             </div>
             <p className="text-sm font-medium text-gray-800">{selectedEquipment.name}</p>
+            <div className="text-xs text-gray-600 space-y-1">
+              <div><strong>Rack:</strong> {currentSite?.racks.find(r => r.id === selectedEquipment.rackId)?.name}</div>
+              <div><strong>Unit:</strong> U{selectedEquipment.rackUnit}</div>
+              <div><strong>Status:</strong> <span className="capitalize">{selectedEquipment.fourDStatus}</span></div>
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={handleRemoveEquipment}
@@ -253,8 +280,62 @@ export function DesignControls() {
                 <option value="existing-removed">Existing-Removed</option>
                 <option value="proposed">Proposed</option>
                 <option value="future">Future</option>
-                <option value="modified">Modified</option>
+                <option value="modified">Move Equipment</option>
               </select>
+            </div>
+          </div>
+        )}
+
+        {selectedEquipment && isMovingEquipment && (
+          <div className="space-y-3 p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-gray-700">Move Equipment</h4>
+              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                Modified
+              </span>
+            </div>
+            <p className="text-sm font-medium text-gray-800">{selectedEquipment.name}</p>
+            <div className="text-xs text-gray-600 bg-gray-100 p-2 rounded">
+              <div><strong>Current Location:</strong></div>
+              <div>Rack: {currentSite?.racks.find(r => r.id === selectedEquipment.rackId)?.name}</div>
+              <div>Unit: U{selectedEquipment.rackUnit}</div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-700">New Location:</label>
+              <select
+                value={moveData.newRackId}
+                onChange={(e) => setMoveData({ ...moveData, newRackId: e.target.value })}
+                className="w-full px-2 py-1 border rounded text-sm"
+              >
+                <option value="">Select Rack</option>
+                {currentSite?.racks.map(rack => (
+                  <option key={rack.id} value={rack.id}>{rack.name}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                placeholder="New Rack Unit"
+                value={moveData.newRackUnit}
+                onChange={(e) => setMoveData({ ...moveData, newRackUnit: parseInt(e.target.value) })}
+                className="w-full px-2 py-1 border rounded text-sm"
+                min="1"
+                max="42"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleMoveEquipment}
+                className="flex-1 px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+                disabled={!moveData.newRackId}
+              >
+                Move
+              </button>
+              <button
+                onClick={() => setIsMovingEquipment(false)}
+                className="flex-1 px-3 py-1 bg-gray-400 text-white rounded text-sm hover:bg-gray-500"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
