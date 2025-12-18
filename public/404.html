@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting…</title>
+    <script>
+      // GitHub Pages SPA fallback.
+      // When a user refreshes or directly opens a deep link (e.g. /digital-twin/site/site-1),
+      // GitHub Pages serves 404.html. We rewrite the URL into a query string and send them
+      // to the app entrypoint so React Router can resolve the route.
+      (function () {
+        var l = window.location;
+        var repoBase = '/digital-twin';
+
+        // keep the path *within* the repo slice, e.g. /digital-twin/site/site-1 -> /site/site-1
+        var pathWithinRepo = l.pathname.indexOf(repoBase) === 0 ? l.pathname.slice(repoBase.length) : l.pathname;
+        if (!pathWithinRepo) pathWithinRepo = '/';
+
+        // Preserve query/hash if any.
+        var newUrl = repoBase + '/?p=' + encodeURIComponent(pathWithinRepo) +
+          (l.search ? '&q=' + encodeURIComponent(l.search.slice(1)) : '') +
+          (l.hash || '');
+
+        l.replace(l.protocol + '//' + l.host + newUrl);
+      })();
+    </script>
+  </head>
+  <body>
+    Redirecting…
+  </body>
+</html>

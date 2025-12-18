@@ -15,6 +15,13 @@ export function SitePage() {
   const [inventoryVisible, setInventoryVisible] = useState(false);
   const [layersVisible, setLayersVisible] = useState(false);
 
+  const selectedEquipment = currentSite?.equipment.find(e => e.id === selectedEquipmentId);
+  // Keep design controls available during move planning/editing.
+  const shouldShowDesignControls =
+    !!selectedEquipmentId &&
+    !!selectedEquipment &&
+    (selectedEquipment.fourDStatus !== 'existing-removed' || !!selectedEquipment.plannedMove);
+
   // Load sites first, then select the specific site
   useEffect(() => {
     // If sites haven't been loaded yet, load them first
@@ -120,7 +127,7 @@ export function SitePage() {
       )}
 
       {/* Right Sliding Panel - Design Controls (only when equipment selected) */}
-      {selectedEquipmentId && (
+      {shouldShowDesignControls && (
         <div 
           className="absolute right-0 top-20 bottom-0 z-10 transition-transform duration-300 ease-in-out translate-x-0"
           style={{ width: '380px' }}

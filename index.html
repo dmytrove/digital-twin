@@ -2,12 +2,32 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>bim-viewer-demo</title>
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // If the user arrived via `public/404.html`, it rewrites the requested path into `?p=`.
+      // Restore the original path so React Router can match it.
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var p = params.get('p');
+        if (!p) return;
+
+        var q = params.get('q');
+        params.delete('p');
+        params.delete('q');
+
+        var newSearch = params.toString();
+        var restoredPath = p;
+        var restoredQuery = q ? ('?' + q) : (newSearch ? ('?' + newSearch) : '');
+
+        window.history.replaceState(null, '', window.location.pathname.replace(/\/$/, '') + restoredPath + restoredQuery + window.location.hash);
+      })();
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Plane } from '@react-three/drei';
-import { useMemo, memo, useEffect, useRef } from 'react';
+import { OrbitControls, PerspectiveCamera, Plane, TransformControls } from '@react-three/drei';
+import { useMemo, memo, useEffect, useRef, useCallback } from 'react';
 import { useBIMStore } from '../../store/bimStore';
 import { Equipment3D } from './Equipment3D';
 import { SimplifiedRack } from './SimplifiedRack';
@@ -8,9 +8,21 @@ import { Building3D } from './Building3D';
 import type { BIMEquipment } from '../../types/bim';
 import * as THREE from 'three';
 
+type SnapResult = {
+  rackId: string;
+  rackUnit: number;
+  worldPos: THREE.Vector3;
+  hasConflict: boolean;
+} | null;
+
 // Simple animated overlay for move previews (highlight + ghosts + arrow)
 const MovePreviewOverlay = memo(function MovePreviewOverlay() {
   const { currentSite, movePreview, selectedEquipmentId } = useBIMStore();
+
+  // Keep equipment footprint constant in 3D (only height varies).
+  // This must match Equipment3D + synthetic data.
+  const STANDARD_EQUIPMENT_WIDTH = 0.48;
+  const STANDARD_EQUIPMENT_DEPTH = 0.8;
 
   const pulseRef = useRef<{ t: number }>({ t: 0 });
   const highlightMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
@@ -159,7 +171,7 @@ const MovePreviewOverlay = memo(function MovePreviewOverlay() {
 
       {/* Ghost at target location */}
       <mesh position={data.targetPos}>
-        <boxGeometry args={[0.48, data.moving.dimensions.height, 0.8]} />
+        <boxGeometry args={[STANDARD_EQUIPMENT_WIDTH, data.moving.dimensions.height, STANDARD_EQUIPMENT_DEPTH]} />
         <meshStandardMaterial
           color={baseColor}
           transparent
@@ -171,7 +183,7 @@ const MovePreviewOverlay = memo(function MovePreviewOverlay() {
 
       {/* Emphasize original location */}
       <mesh position={data.sourcePos}>
-        <boxGeometry args={[0.48, data.moving.dimensions.height, 0.8]} />
+        <boxGeometry args={[STANDARD_EQUIPMENT_WIDTH, data.moving.dimensions.height, STANDARD_EQUIPMENT_DEPTH]} />
         <meshStandardMaterial
           color="#2563eb"
           transparent
@@ -231,7 +243,24 @@ const WebGLContextHandler = () => {
 };
 
 const BIMViewerComponent = () => {
-  const { currentSite, layerVisibility, buildingVisible, selectEquipment } = useBIMStore();
+  const {
+    currentSite,
+    layerVisibility,
+    buildingVisible,
+    selectEquipment,
+    selectedEquipmentId,
+    setMovePreview,
+    moveEquipment,
+    updateEquipmentStatus,
+  } = useBIMStore();
+
+  const controlsRef = useRef<any>(null);
+  const dragObjectRef = useRef<THREE.Object3D>(null);
+  const lastSnapRef = useRef<SnapResult>(null);
+
+  // Constants must match synthetic data + Equipment3D.
+  const STANDARD_EQUIPMENT_WIDTH = 0.48;
+  const STANDARD_EQUIPMENT_DEPTH = 0.8;
   
   // Handle background click to deselect equipment
   const handleBackgroundClick = () => {
@@ -244,11 +273,100 @@ const BIMViewerComponent = () => {
     return currentSite.equipment.filter(equipment => layerVisibility[equipment.fourDStatus]);
   }, [currentSite?.equipment, layerVisibility]);
 
+  const selectedEquipment = useMemo(() => {
+    if (!currentSite || !selectedEquipmentId) return null;
+    return currentSite.equipment.find(e => e.id === selectedEquipmentId) ?? null;
+  }, [currentSite, selectedEquipmentId]);
+
   // Filter visible racks based on layer visibility
   const visibleRacks = useMemo(() => {
     if (!currentSite) return [];
     return currentSite.racks.filter(rack => layerVisibility[rack.fourDStatus]);
   }, [currentSite?.racks, layerVisibility]);
+
+  const snapToRackUnits = useCallback((worldPos: THREE.Vector3): SnapResult => {
+    if (!currentSite || !selectedEquipment) return null;
+
+    // Pick closest rack by XZ distance.
+    let bestRack = null as any;
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (const rack of currentSite.racks) {
+      // Allow snapping even if rack is currently hidden by layers (designer may want to move to it).
+      const dx = worldPos.x - rack.position.x;
+      const dz = worldPos.z - rack.position.z;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < bestDist) {
+        bestDist = d2;
+        bestRack = rack;
+      }
+    }
+    if (!bestRack) return null;
+
+    const totalUnits = bestRack.totalUnits || 42;
+    const unitHeight = bestRack.dimensions.height / totalUnits;
+
+    // Map Y into rack-local unit index.
+    // Rack is centered around rack.position.y with height bestRack.dimensions.height.
+    const rackBottomY = bestRack.position.y; // in this demo racks are at y=0 and extend upwards
+    const localY = worldPos.y - rackBottomY;
+    let unit = Math.floor(localY / unitHeight) + 1;
+    unit = Math.max(1, Math.min(totalUnits, unit));
+
+    // Clamp so it fits equipment height
+    unit = Math.min(unit, totalUnits - selectedEquipment.unitHeight + 1);
+
+    // Compute snapped world position (center of occupied U-range)
+    const snappedY = rackBottomY + (unit - 1) * unitHeight + (selectedEquipment.unitHeight * unitHeight) / 2;
+    const snapped = new THREE.Vector3(bestRack.position.x, snappedY, bestRack.position.z);
+
+    // Conflict check: overlap in unit range at destination
+    const startUnit = unit;
+    const endUnit = unit + selectedEquipment.unitHeight - 1;
+    const conflicts = currentSite.equipment
+      .filter(e => e.id !== selectedEquipment.id)
+      .filter(e => e.fourDStatus !== 'existing-removed')
+      .filter(e => e.rackId === bestRack.id)
+      .filter(e => {
+        const from = e.rackUnit;
+        const to = e.rackUnit + e.unitHeight - 1;
+        return !(to < startUnit || from > endUnit);
+      });
+
+    return {
+      rackId: bestRack.id,
+      rackUnit: unit,
+      worldPos: snapped,
+      hasConflict: conflicts.length > 0,
+    };
+  }, [currentSite, selectedEquipment]);
+
+  // Keep the gizmo's proxy object in sync when selection changes.
+  useEffect(() => {
+    if (!selectedEquipment || !dragObjectRef.current) {
+      lastSnapRef.current = null;
+      return;
+    }
+
+    dragObjectRef.current.position.set(
+      selectedEquipment.position.x,
+      selectedEquipment.position.y,
+      selectedEquipment.position.z
+    );
+
+    // Seed preview from current selection location.
+    const seedSnap = snapToRackUnits(dragObjectRef.current.position);
+    lastSnapRef.current = seedSnap;
+    if (seedSnap) {
+      setMovePreview({
+        equipmentId: selectedEquipment.id,
+        targetRackId: seedSnap.rackId,
+        targetRackUnit: seedSnap.rackUnit,
+        hasConflict: seedSnap.hasConflict,
+      });
+    } else {
+      setMovePreview(null);
+    }
+  }, [selectedEquipment, setMovePreview, snapToRackUnits]);
 
   // Build a move highlight box when user is previewing a move action.
   // Move preview visuals rendered by overlay component
@@ -299,6 +417,63 @@ const BIMViewerComponent = () => {
         minDistance={2}
         makeDefault
       />
+
+      {/* 3D Move gizmo for selected equipment */}
+      {selectedEquipment && (
+        <TransformControls
+          ref={controlsRef}
+          object={dragObjectRef.current ?? undefined}
+          mode="translate"
+          showX
+          showZ
+          showY={false}
+          size={0.85}
+          enabled
+          onMouseDown={() => {
+            // (Optional) we could disable orbit controls here if we keep a ref to them.
+          }}
+          onObjectChange={() => {
+            if (!dragObjectRef.current) return;
+
+            // Constrain to XZ plane of rack grid; Y will be snapped.
+            const p = dragObjectRef.current.position;
+            // Prevent dragging below floor
+            p.y = Math.max(0.01, p.y);
+
+            const snap = snapToRackUnits(p);
+            if (!snap) return;
+
+            lastSnapRef.current = snap;
+
+            // Snap the proxy object for a "magnetic" feel.
+            p.set(snap.worldPos.x, snap.worldPos.y, snap.worldPos.z);
+
+            setMovePreview({
+              equipmentId: selectedEquipment.id,
+              targetRackId: snap.rackId,
+              targetRackUnit: snap.rackUnit,
+              hasConflict: snap.hasConflict,
+            });
+          }}
+          onMouseUp={() => {
+            // Commit a planned move when drag ends.
+            if (!selectedEquipment) return;
+            const snap = lastSnapRef.current;
+            if (!snap) {
+              setMovePreview(null);
+              return;
+            }
+            if (snap.hasConflict) {
+              // Don't commit invalid moves; keep preview so user sees the issue.
+              return;
+            }
+
+            // Mark as modified for UX and store the planned destination.
+            updateEquipmentStatus(selectedEquipment.id, 'modified');
+            moveEquipment(selectedEquipment.id, snap.rackId, snap.rackUnit);
+          }}
+        />
+      )}
       
       <ambientLight intensity={0.8} />
       <directionalLight 
@@ -345,6 +520,25 @@ const BIMViewerComponent = () => {
           visible={true}
         />
       ))}
+
+      {/* Proxy object for TransformControls to attach to */}
+      {selectedEquipment && (
+        <group>
+          <object3D ref={dragObjectRef} />
+
+          {/* Small, subtle handle marker at the proxy position */}
+          <mesh
+            position={[selectedEquipment.position.x, selectedEquipment.position.y, selectedEquipment.position.z]}
+            onClick={(e) => {
+              e.stopPropagation();
+              selectEquipment(selectedEquipment.id);
+            }}
+          >
+            <boxGeometry args={[STANDARD_EQUIPMENT_WIDTH, selectedEquipment.dimensions.height, STANDARD_EQUIPMENT_DEPTH]} />
+            <meshStandardMaterial color="#000000" transparent opacity={0.0} />
+          </mesh>
+        </group>
+      )}
     </Canvas>
   );
 };

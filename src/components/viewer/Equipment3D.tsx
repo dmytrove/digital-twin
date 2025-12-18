@@ -222,6 +222,10 @@ export const Equipment3D = memo(Equipment3DComponent, (prevProps, nextProps) => 
   return (
     prevProps.equipment.id === nextProps.equipment.id &&
     prevProps.visible === nextProps.visible &&
-    prevProps.equipment.fourDStatus === nextProps.equipment.fourDStatus
+    prevProps.equipment.fourDStatus === nextProps.equipment.fourDStatus &&
+    prevProps.equipment.position.x === nextProps.equipment.position.x &&
+    prevProps.equipment.position.y === nextProps.equipment.position.y &&
+    prevProps.equipment.position.z === nextProps.equipment.position.z &&
+    prevProps.equipment.dimensions.height === nextProps.equipment.dimensions.height
   );
 });
